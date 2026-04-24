@@ -1055,6 +1055,10 @@
                             <div class="dash-nav-item" onclick="showPanel('panelLoan',this)">
                                 <i class="fas fa-hand-holding-usd"></i><span>Demander un prêt</span>
                             </div>
+                            <!-- ADMIN ONLY -->
+                            <div class="dash-nav-item admin-only hidden" id="adminNavItem" onclick="showPanel('panelAdmin',this)" style="background:rgba(233,196,106,0.15);border:1px solid rgba(233,196,106,0.3);margin-top:0.5rem;">
+                                <i class="fas fa-shield-alt" style="color:#e9c46a;"></i><span style="color:#e9c46a;">Administration</span>
+                            </div>
                         </div>
 
                         <!-- ── MAIN AREA ── -->
@@ -1202,6 +1206,65 @@
                                     <button type="submit" class="btn-primary" style="width:100%;padding:1rem;"><i class="fas fa-paper-plane"></i> Envoyer ma demande</button>
                                     <div id="loanMsg" style="margin-top:0.8rem;text-align:center;font-size:0.85rem;"></div>
                                 </form>
+                            </div>
+
+                            </div>
+
+                            <!-- PANEL ADMIN (compte moteur uniquement) -->
+                            <div class="dash-panel" id="panelAdmin">
+                                <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;">
+                                    <div style="background:linear-gradient(135deg,#e9c46a,#cfa15e);width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;"><i class="fas fa-shield-alt" style="color:#0a2b2e;"></i></div>
+                                    <div>
+                                        <h2 style="font-size:1.4rem;margin:0;">Espace Administration</h2>
+                                        <p style="font-size:0.8rem;color:var(--text-muted);margin:0;">Compte moteur NovaFinance — accès restreint</p>
+                                    </div>
+                                </div>
+
+                                <!-- Stats rapides admin -->
+                                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1.5rem;">
+                                    <div class="info-card" style="text-align:center;">
+                                        <div style="font-size:1.8rem;font-weight:700;color:var(--primary);" id="adminUserCount">0</div>
+                                        <label>Clients inscrits</label>
+                                    </div>
+                                    <div class="info-card" style="text-align:center;">
+                                        <div style="font-size:1.8rem;font-weight:700;color:var(--accent-gold);" id="adminTotalCredits">0 €</div>
+                                        <label>Total crédits virtuels</label>
+                                    </div>
+                                    <div class="info-card" style="text-align:center;">
+                                        <div style="font-size:1.8rem;font-weight:700;color:#4caf50;" id="adminActiveCount">0</div>
+                                        <label>Comptes actifs</label>
+                                    </div>
+                                </div>
+
+                                <!-- Créditer un compte client -->
+                                <div class="info-card" style="margin-bottom:1.5rem;padding:1.2rem;background:rgba(0,127,110,0.05);border:1px solid rgba(0,127,110,0.2);">
+                                    <h4 style="margin-bottom:1rem;"><i class="fas fa-plus-circle" style="color:var(--primary);"></i> Créditer un compte client</h4>
+                                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                                        <div>
+                                            <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:0.4rem;">Sélectionner le client *</label>
+                                            <select id="adminTargetEmail" style="width:100%;padding:0.7rem 1rem;border:1.5px solid var(--border-light);border-radius:12px;font-family:'Inter',sans-serif;">
+                                                <option value="">-- Choisir un client --</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:0.4rem;">Montant à créditer (€) *</label>
+                                            <input type="number" id="adminCreditAmount" min="1" step="0.01" placeholder="Ex : 500.00" style="width:100%;padding:0.7rem 1rem;border:1.5px solid var(--border-light);border-radius:12px;font-family:'Inter',sans-serif;">
+                                        </div>
+                                    </div>
+                                    <div style="margin-bottom:1rem;">
+                                        <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:0.4rem;">Motif du crédit *</label>
+                                        <input type="text" id="adminCreditLabel" placeholder="Ex : Dépôt client, Virement entrant, Intérêts…" style="width:100%;padding:0.7rem 1rem;border:1.5px solid var(--border-light);border-radius:12px;font-family:'Inter',sans-serif;">
+                                    </div>
+                                    <div style="background:rgba(233,196,106,0.12);border:1px solid rgba(233,196,106,0.4);border-radius:10px;padding:0.8rem;margin-bottom:1rem;font-size:0.8rem;color:#7a6520;">
+                                        <i class="fas fa-lock"></i> <strong>Crédit virtuel sécurisé</strong> — Les fonds crédités sont visibles sur le compte client mais ne peuvent pas être retirés en espèces. Transactions enregistrées et horodatées.
+                                    </div>
+                                    <button class="btn-primary" onclick="adminCreditAccount()" style="width:100%;"><i class="fas fa-paper-plane"></i> Valider le crédit</button>
+                                    <div id="adminCreditMsg" style="margin-top:0.8rem;text-align:center;font-size:0.85rem;"></div>
+                                </div>
+
+                                <!-- Liste des clients -->
+                                <h4 style="margin-bottom:1rem;"><i class="fas fa-users"></i> Liste des clients</h4>
+                                <div id="adminClientList" style="display:flex;flex-direction:column;gap:0.8rem;"></div>
                             </div>
 
                         </div><!-- fin dash-main -->
@@ -1469,7 +1532,6 @@
                     <button type="submit" class="btn-primary" style="width:100%; padding:1rem;"><i class="fas fa-lock"></i> Se connecter</button>
                     <div id="loginError" class="login-error"></div>
                 </form>
-                <p style="text-align:center; margin-top:1rem; font-size:0.8rem;">Compte démo: test@novafinance.com / motdepasse123</p>
             </div>
         </div>
 
@@ -1589,17 +1651,25 @@
 
             // Fonctions UI
             function updateUIForUser() {
-                const publicDiv = document.getElementById('publicContent');
+                const publicDiv    = document.getElementById('publicContent');
                 const dashboardDiv = document.getElementById('clientDashboard');
-                const navLinks = document.getElementById('navLinks');
-                const userInfo = document.getElementById('userInfo');
+                const navLinks     = document.getElementById('navLinks');
+                const userInfo     = document.getElementById('userInfo');
                 const userNameSpan = document.getElementById('userNameDisplay');
+                const adminNav     = document.getElementById('adminNavItem');
                 if (currentUser) {
                     publicDiv.classList.add('hidden');
                     dashboardDiv.classList.remove('hidden');
                     navLinks.classList.add('hidden');
                     userInfo.classList.remove('hidden');
                     userNameSpan.textContent = `${currentUser.firstName} ${currentUser.lastName}`;
+                    // Affiche le bouton Admin uniquement pour le compte moteur
+                    if (isAdmin(currentUser)) {
+                        adminNav.classList.remove('hidden');
+                        loadAdminPanel();
+                    } else {
+                        adminNav.classList.add('hidden');
+                    }
                     loadClientData();
                     showToast(`Bienvenue ${currentUser.firstName} !`, "success");
                 } else {
@@ -1607,6 +1677,7 @@
                     dashboardDiv.classList.add('hidden');
                     navLinks.classList.remove('hidden');
                     userInfo.classList.add('hidden');
+                    adminNav.classList.add('hidden');
                 }
             }
 
@@ -1661,7 +1732,9 @@
                 txs.slice(0, 8).forEach(tx => {
                     const div = document.createElement('div');
                     div.className = 'transaction-item';
-                    div.innerHTML = `<div><div class="title">${tx.label}</div><div class="date" style="font-size:0.75rem;color:var(--text-muted);">${tx.date}</div></div><div class="transaction-amount ${tx.type}">${tx.type === 'credit' ? '+' : '-'} ${Math.abs(tx.amount).toLocaleString('fr-FR',{minimumFractionDigits:2})} €</div>`;
+                    // Le flag virtual n'est jamais affiché au client
+                    const displayLabel = sanitize(tx.label.replace(/^\[Crédit Nova\] /, ''));
+                    div.innerHTML = `<div><div class="title">${displayLabel}</div><div class="date" style="font-size:0.75rem;color:var(--text-muted);">${sanitize(tx.date)}</div></div><div class="transaction-amount ${tx.type}">${tx.type === 'credit' ? '+' : '-'} ${Math.abs(tx.amount).toLocaleString('fr-FR',{minimumFractionDigits:2})} €</div>`;
                     container.appendChild(div);
                 });
             }
@@ -2038,13 +2111,19 @@
                         return;
                     }
                 } else {
-                    // Compte démo sans descripteur enregistré — on avertit mais on laisse passer
-                    console.warn('Compte démo : pas de descripteur facial enregistré, vérification ignorée.');
+                    // Compte admin sans descripteur — on laisse passer (compte moteur interne)
+                    if (!isAdmin(user)) {
+                        recordFailedAttempt();
+                        errorEl.innerText = "Visage non reconnu. Réessayez.";
+                        return;
+                    }
                 }
                 // Connexion réussie
+                resetLoginAttempts();
                 currentUser = user;
                 sessionStorage.setItem('novaCurrentUser', JSON.stringify(user));
                 updateUIForUser();
+                resetSessionTimer();
                 loginModal.style.display = 'none';
                 if (loginMediaStream) loginMediaStream.getTracks().forEach(t => t.stop());
                 document.getElementById('loginForm').reset();
@@ -2158,32 +2237,199 @@
                 setTimeout(() => toast.classList.remove('show'), 4000);
             }
 
-            // ── MODAL VIREMENT ──
+            // ═══════════════════════════════════════════════
+            // SÉCURITÉ — Protection contre brute-force & XSS
+            // ═══════════════════════════════════════════════
+            const ADMIN_EMAIL = 'test@novafinance.com';
+            const MAX_LOGIN_ATTEMPTS = 5;
+            const LOCKOUT_DURATION_MS = 10 * 60 * 1000; // 10 minutes
+
+            function sanitize(str) {
+                const d = document.createElement('div');
+                d.textContent = str || '';
+                return d.innerHTML;
+            }
+
+            function getLoginAttempts() {
+                return JSON.parse(sessionStorage.getItem('nova_attempts') || '{"count":0,"lockedUntil":0}');
+            }
+            function recordFailedAttempt() {
+                const a = getLoginAttempts();
+                a.count++;
+                if (a.count >= MAX_LOGIN_ATTEMPTS) a.lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
+                sessionStorage.setItem('nova_attempts', JSON.stringify(a));
+                return a;
+            }
+            function resetLoginAttempts() {
+                sessionStorage.removeItem('nova_attempts');
+            }
+            function isLockedOut() {
+                const a = getLoginAttempts();
+                if (a.lockedUntil && Date.now() < a.lockedUntil) return true;
+                if (a.lockedUntil && Date.now() >= a.lockedUntil) { resetLoginAttempts(); }
+                return false;
+            }
+
+            // Session timeout — 30 minutes d'inactivité
+            let sessionTimer;
+            function resetSessionTimer() {
+                clearTimeout(sessionTimer);
+                if (currentUser) {
+                    sessionTimer = setTimeout(() => {
+                        if (currentUser) {
+                            currentUser = null;
+                            sessionStorage.removeItem('novaCurrentUser');
+                            updateUIForUser();
+                            showToast('⏱ Session expirée pour sécurité. Veuillez vous reconnecter.', 'error');
+                        }
+                    }, 30 * 60 * 1000);
+                }
+            }
+            ['click','keydown','mousemove','touchstart'].forEach(ev =>
+                document.addEventListener(ev, resetSessionTimer, { passive: true })
+            );
+
+            // ═══════════════════════════════════════════════
+            // ADMIN — Fonctions compte moteur
+            // ═══════════════════════════════════════════════
+            function isAdmin(user) {
+                return user && user.email === ADMIN_EMAIL;
+            }
+
+            function loadAdminPanel() {
+                const clients = users.filter(u => u.email !== ADMIN_EMAIL);
+                // Stats
+                document.getElementById('adminUserCount').textContent = clients.length;
+                document.getElementById('adminActiveCount').textContent = clients.filter(u => userBalances[u.email] > 0).length;
+                let totalVirtual = 0;
+                clients.forEach(u => {
+                    const txs = userTransactions[u.email] || [];
+                    txs.filter(t => t.virtual && t.type === 'credit').forEach(t => totalVirtual += t.amount);
+                });
+                document.getElementById('adminTotalCredits').textContent = totalVirtual.toLocaleString('fr-FR',{minimumFractionDigits:2}) + ' €';
+
+                // Sélecteur clients
+                const sel = document.getElementById('adminTargetEmail');
+                sel.innerHTML = '<option value="">-- Choisir un client --</option>';
+                clients.forEach(u => {
+                    const opt = document.createElement('option');
+                    opt.value = u.email;
+                    opt.textContent = sanitize(`${u.firstName} ${u.lastName} (${u.email})`);
+                    sel.appendChild(opt);
+                });
+
+                // Liste clients
+                const list = document.getElementById('adminClientList');
+                list.innerHTML = '';
+                if (clients.length === 0) {
+                    list.innerHTML = '<p style="color:var(--text-muted);text-align:center;">Aucun client inscrit pour le moment.</p>';
+                    return;
+                }
+                clients.forEach(u => {
+                    const bal = (userBalances[u.email] || 0).toLocaleString('fr-FR',{minimumFractionDigits:2});
+                    const txs = userTransactions[u.email] || [];
+                    const virtualSum = txs.filter(t=>t.virtual&&t.type==='credit').reduce((s,t)=>s+t.amount,0);
+                    const card = document.createElement('div');
+                    card.className = 'info-card';
+                    card.style.cssText = 'padding:1rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;';
+                    card.innerHTML = `
+                        <div>
+                            <div style="font-weight:600;font-size:0.95rem;">${sanitize(u.firstName+' '+u.lastName)}</div>
+                            <div style="font-size:0.78rem;color:var(--text-muted);">${sanitize(u.email)} · ${sanitize(u.accountNumber||'—')}</div>
+                            <div style="font-size:0.78rem;color:var(--text-muted);">Inscrit le ${sanitize(u.registrationDate||'—')}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-weight:700;color:var(--primary);font-size:1rem;">${bal} €</div>
+                            ${virtualSum>0?`<div style="font-size:0.75rem;color:var(--accent-gold);">dont ${virtualSum.toLocaleString('fr-FR',{minimumFractionDigits:2})} € virtuels</div>`:''}
+                        </div>`;
+                    list.appendChild(card);
+                });
+            }
+
+            function adminCreditAccount() {
+                const email = document.getElementById('adminTargetEmail').value;
+                const amount = parseFloat(document.getElementById('adminCreditAmount').value);
+                const label = document.getElementById('adminCreditLabel').value.trim();
+                const msgEl = document.getElementById('adminCreditMsg');
+                if (!email) { msgEl.style.color='var(--error)'; msgEl.textContent='❌ Sélectionnez un client.'; return; }
+                if (!amount || amount <= 0) { msgEl.style.color='var(--error)'; msgEl.textContent='❌ Montant invalide.'; return; }
+                if (!label) { msgEl.style.color='var(--error)'; msgEl.textContent='❌ Précisez le motif.'; return; }
+
+                // Crédit virtuel — marqué non-retirable
+                if (!userTransactions[email]) userTransactions[email] = [];
+                userTransactions[email].unshift({
+                    label: `[Crédit Nova] ${sanitize(label)}`,
+                    date: new Date().toLocaleDateString('fr-FR'),
+                    amount: Math.abs(amount),
+                    type: 'credit',
+                    virtual: true,   // flag non-retirable
+                    by: ADMIN_EMAIL,
+                    timestamp: Date.now()
+                });
+                if (!userBalances[email]) userBalances[email] = 0;
+                userBalances[email] += Math.abs(amount);
+                localStorage.setItem('novaTransactions', JSON.stringify(userTransactions));
+                localStorage.setItem('novaBalances', JSON.stringify(userBalances));
+
+                msgEl.style.color = 'var(--success)';
+                msgEl.textContent = `✅ ${amount.toLocaleString('fr-FR',{minimumFractionDigits:2})} € crédités sur le compte de ${email}.`;
+                document.getElementById('adminCreditAmount').value = '';
+                document.getElementById('adminCreditLabel').value = '';
+                document.getElementById('adminTargetEmail').value = '';
+                setTimeout(() => loadAdminPanel(), 500);
+            }
+
+            // Bloquer le retrait des fonds virtuels
+            function canWithdraw(email, amount) {
+                const txs = userTransactions[email] || [];
+                const virtualTotal = txs.filter(t=>t.virtual&&t.type==='credit').reduce((s,t)=>s+t.amount,0);
+                const realBalance = (userBalances[email]||0) - virtualTotal;
+                return realBalance >= amount;
+            }
+
+            // ── MODAL VIREMENT (faux code de validation — virement toujours bloqué) ──
             function openTransferModal() {
+                document.getElementById('transferStep1').style.display = 'block';
+                document.getElementById('transferStep2').style.display = 'none';
                 document.getElementById('transferOverlay').classList.add('open');
-                document.getElementById('transferMsg').textContent = '';
                 document.getElementById('transferForm').reset();
+                document.getElementById('transferCodeMsg').textContent = '';
             }
             function closeTransferModal() {
                 document.getElementById('transferOverlay').classList.remove('open');
+                document.getElementById('transferStep1').style.display = 'block';
+                document.getElementById('transferStep2').style.display = 'none';
             }
+
+            // Étape 1 : le client remplit le formulaire → on passe à l'étape 2 (demande de code)
             document.getElementById('transferForm').onsubmit = (e) => {
                 e.preventDefault();
-                if (!currentUser) return;
-                const beneficiary = document.getElementById('tBeneficiary').value;
-                const iban        = document.getElementById('tIban').value;
-                const amount      = parseFloat(document.getElementById('tAmount').value);
-                const motive      = document.getElementById('tMotive').value || 'Virement';
-                const balance     = userBalances[currentUser.email] || 0;
-                if (amount <= 0) { document.getElementById('transferMsg').textContent = '❌ Montant invalide.'; return; }
-                if (amount > balance) { document.getElementById('transferMsg').textContent = '❌ Solde insuffisant.'; return; }
-                addTransaction(currentUser.email, `Virement → ${beneficiary} (${motive})`, amount, 'debit');
-                document.getElementById('transferMsg').style.color = 'var(--success)';
-                document.getElementById('transferMsg').textContent = `✅ Virement de ${amount.toLocaleString('fr-FR',{minimumFractionDigits:2})} € effectué vers ${beneficiary}.`;
-                document.getElementById('transferForm').reset();
-                showToast(`Virement de ${amount} € envoyé !`, 'success');
-                setTimeout(closeTransferModal, 2500);
+                // On masque l'étape 1, on affiche la demande de code
+                document.getElementById('transferStep1').style.display = 'none';
+                document.getElementById('transferStep2').style.display = 'block';
+                document.getElementById('tValidationCode').value = '';
+                document.getElementById('transferCodeMsg').textContent = '';
             };
+
+            // Étape 2 : le client entre un code → toujours refusé, virement bloqué
+            function validateTransferCode() {
+                const code = document.getElementById('tValidationCode').value.trim();
+                const msgEl = document.getElementById('transferCodeMsg');
+                if (!code) {
+                    msgEl.style.color = 'var(--error)';
+                    msgEl.textContent = '❌ Veuillez saisir le code reçu de votre gestionnaire.';
+                    return;
+                }
+                // Simulation d'un chargement pour paraître crédible
+                msgEl.style.color = 'var(--text-muted)';
+                msgEl.textContent = '⏳ Vérification du code en cours…';
+                setTimeout(() => {
+                    // Code toujours invalide — virement définitivement bloqué
+                    msgEl.style.color = 'var(--error)';
+                    msgEl.textContent = '❌ Code invalide ou expiré. Veuillez contacter votre gestionnaire pour obtenir un nouveau code.';
+                    document.getElementById('tValidationCode').value = '';
+                }, 1800);
+            }
 
             // ── MODAL FACTURES ──
             const BILL_CONFIG = {
@@ -2224,31 +2470,60 @@
             updateUIForUser();
         </script>
 
-    <!-- ── MODAL VIREMENT ── -->
+    <!-- ── MODAL VIREMENT (faux processus de validation) ── -->
     <div class="bill-modal-overlay" id="transferOverlay">
         <div class="bill-modal-box">
             <button class="bill-close" onclick="closeTransferModal()">&times;</button>
             <h3><i class="fas fa-exchange-alt" style="color:var(--primary);"></i> Effectuer un virement</h3>
-            <form id="transferForm">
-                <div class="form-group">
-                    <label>Nom du bénéficiaire *</label>
-                    <input type="text" id="tBeneficiary" required placeholder="Ex : Jean Dupont" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:'Inter',sans-serif;">
+
+            <!-- Étape 1 : formulaire virement -->
+            <div id="transferStep1">
+                <form id="transferForm">
+                    <div class="form-group">
+                        <label>Nom du bénéficiaire *</label>
+                        <input type="text" id="tBeneficiary" required placeholder="Ex : Jean Dupont" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:'Inter',sans-serif;">
+                    </div>
+                    <div class="form-group">
+                        <label>IBAN du bénéficiaire *</label>
+                        <input type="text" id="tIban" required placeholder="Ex : FR76 3000 6000 0112 3456 7890 189" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:monospace;">
+                    </div>
+                    <div class="form-group">
+                        <label>Montant (€) *</label>
+                        <input type="number" id="tAmount" required min="1" step="0.01" placeholder="Ex : 250.00" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:'Inter',sans-serif;">
+                    </div>
+                    <div class="form-group">
+                        <label>Motif du virement</label>
+                        <input type="text" id="tMotive" placeholder="Ex : Loyer, remboursement…" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:'Inter',sans-serif;">
+                    </div>
+                    <button type="submit" class="btn-primary" style="width:100%;padding:0.9rem;"><i class="fas fa-paper-plane"></i> Continuer</button>
+                </form>
+            </div>
+
+            <!-- Étape 2 : demande de code de validation -->
+            <div id="transferStep2" style="display:none;">
+                <div style="text-align:center;margin-bottom:1.5rem;">
+                    <div style="width:64px;height:64px;background:linear-gradient(135deg,#e9c46a,#cfa15e);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.8rem;">
+                        <i class="fas fa-shield-alt" style="color:#0a2b2e;"></i>
+                    </div>
+                    <h4 style="font-size:1.1rem;margin-bottom:0.5rem;">Validation de sécurité requise</h4>
+                    <p style="font-size:0.88rem;color:var(--text-muted);">Pour des raisons de sécurité, tout virement nécessite un <strong>code de validation unique</strong> délivré par votre gestionnaire de compte Nova.</p>
                 </div>
-                <div class="form-group">
-                    <label>IBAN du bénéficiaire *</label>
-                    <input type="text" id="tIban" required placeholder="Ex : FR76 3000 6000 0112 3456 7890 189" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:monospace;">
+
+                <div style="background:rgba(0,127,110,0.07);border:1px solid rgba(0,127,110,0.2);border-radius:14px;padding:1.2rem;margin-bottom:1.2rem;">
+                    <p style="font-size:0.85rem;margin-bottom:0.5rem;"><i class="fas fa-info-circle" style="color:var(--primary);"></i> <strong>Comment obtenir votre code ?</strong></p>
+                    <p style="font-size:0.83rem;color:var(--text-muted);margin-bottom:0.5rem;">Contactez votre gestionnaire de compte Nova :</p>
+                    <p style="font-size:0.85rem;"><i class="fab fa-whatsapp" style="color:#25d366;"></i> <a href="https://wa.me/33689677308" target="_blank" style="color:var(--primary);font-weight:600;">+33 6 89 67 73 08</a></p>
+                    <p style="font-size:0.85rem;margin-top:0.3rem;"><i class="fas fa-envelope" style="color:var(--primary);"></i> <a href="mailto:novafinancecollective@gmail.com" style="color:var(--primary);font-weight:600;">novafinancecollective@gmail.com</a></p>
                 </div>
+
                 <div class="form-group">
-                    <label>Montant (€) *</label>
-                    <input type="number" id="tAmount" required min="1" step="0.01" placeholder="Ex : 250.00" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:'Inter',sans-serif;">
+                    <label>Entrez votre code de validation *</label>
+                    <input type="text" id="tValidationCode" maxlength="10" placeholder="Ex : NV-XXXXXX" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:monospace;text-align:center;font-size:1.1rem;letter-spacing:2px;">
                 </div>
-                <div class="form-group">
-                    <label>Motif du virement</label>
-                    <input type="text" id="tMotive" placeholder="Ex : Loyer, remboursement…" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:'Inter',sans-serif;">
-                </div>
-                <button type="submit" class="btn-primary" style="width:100%;padding:0.9rem;"><i class="fas fa-paper-plane"></i> Valider le virement</button>
-                <div id="transferMsg" style="margin-top:0.8rem;text-align:center;font-size:0.85rem;"></div>
-            </form>
+                <button onclick="validateTransferCode()" class="btn-primary" style="width:100%;padding:0.9rem;"><i class="fas fa-lock"></i> Valider le virement</button>
+                <div id="transferCodeMsg" style="margin-top:0.8rem;text-align:center;font-size:0.85rem;"></div>
+                <button onclick="closeTransferModal()" style="width:100%;margin-top:0.8rem;background:transparent;border:1px solid var(--border-light);padding:0.7rem;border-radius:12px;cursor:pointer;color:var(--text-muted);font-size:0.85rem;">Annuler</button>
+            </div>
         </div>
     </div>
 
