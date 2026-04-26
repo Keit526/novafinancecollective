@@ -762,6 +762,34 @@
         .transaction-amount.credit { color: var(--success); }
         .transaction-amount.debit  { color: var(--error); }
 
+        /* ── ACCOUNT TYPE CARDS ── */
+        .account-type-card {
+            display: block; cursor: pointer;
+            border: 2px solid var(--border-light);
+            border-radius: 16px; transition: all 0.2s; background: white;
+        }
+        .account-type-card:has(input:checked) {
+            border-color: var(--primary); background: rgba(0,127,110,0.06);
+            box-shadow: 0 0 0 3px rgba(0,127,110,0.15);
+        }
+        .account-type-card input[type="radio"] { display: none; }
+        .at-inner {
+            display: flex; flex-direction: column; align-items: center;
+            gap: 0.3rem; padding: 1rem 0.5rem; text-align: center;
+        }
+        .at-inner i { font-size: 1.4rem; color: var(--primary); }
+        .at-inner span { font-weight: 600; font-size: 0.85rem; }
+        .at-inner small { color: var(--text-muted); font-size: 0.7rem; }
+
+        /* ── RIB BOX ── */
+        .rib-box {
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            color: white; border-radius: 16px; padding: 1rem 1.2rem;
+            margin-top: 0.5rem;
+        }
+        .rib-box .rib-label { font-size: 0.68rem; opacity: 0.75; text-transform: uppercase; letter-spacing: 1px; }
+        .rib-box .rib-value { font-family: monospace; font-size: 0.92rem; font-weight: 700; letter-spacing: 1.5px; margin-top: 0.2rem; word-break: break-all; }
+
         /* ── SIDEBAR DASHBOARD ── */
         .dashboard-layout {
             display: flex; gap: 0; min-height: 80vh;
@@ -1125,10 +1153,25 @@
                                     <div class="info-card"><label><i class="fas fa-envelope"></i> Email</label><div class="value" id="pEmail"></div></div>
                                     <div class="info-card"><label><i class="fas fa-phone"></i> Téléphone</label><div class="value" id="pPhone"></div></div>
                                     <div class="info-card"><label><i class="fas fa-home"></i> Adresse</label><div class="value" id="pAddress"></div></div>
+                                    <div class="info-card"><label><i class="fas fa-globe"></i> Pays</label><div class="value" id="pCountry"></div></div>
+                                    <div class="info-card"><label><i class="fas fa-wallet"></i> Type de compte</label><div class="value" id="pAccountType"></div></div>
                                     <div class="info-card"><label><i class="fas fa-euro-sign"></i> Salaire mensuel</label><div class="value" id="pSalary"></div></div>
                                     <div class="info-card"><label><i class="fas fa-heart"></i> Situation matrimoniale</label><div class="value" id="pMarital"></div></div>
                                     <div class="info-card"><label><i class="fas fa-briefcase"></i> Profession</label><div class="value" id="pProfession"></div></div>
                                     <div class="info-card"><label><i class="fas fa-calendar"></i> Membre depuis</label><div class="value" id="pDate"></div></div>
+                                    <div class="info-card"><label><i class="fas fa-id-card"></i> IFU / NIF</label><div class="value" id="pIfu" style="font-family:monospace;"></div></div>
+                                </div>
+                                <!-- RIB / IBAN -->
+                                <div style="margin-top:1rem;">
+                                    <div class="rib-box">
+                                        <div class="rib-label"><i class="fas fa-university"></i> &nbsp;RIB / IBAN — NovaFinance-Collective</div>
+                                        <div class="rib-value" id="pRib">—</div>
+                                        <div style="display:flex;gap:2rem;margin-top:0.6rem;flex-wrap:wrap;">
+                                            <div><div class="rib-label">BIC / SWIFT</div><div style="font-family:monospace;font-size:0.9rem;font-weight:600;" id="pBic">—</div></div>
+                                            <div><div class="rib-label">Devise</div><div style="font-size:0.9rem;font-weight:600;">EUR €</div></div>
+                                        </div>
+                                        <div style="font-size:0.7rem;opacity:0.6;margin-top:0.6rem;"><i class="fas fa-lock"></i> Ces coordonnées bancaires sont strictement personnelles et confidentielles.</div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1453,27 +1496,133 @@
 
         <!-- Modals -->
         <div id="accountModal" class="modal">
-            <div class="modal-content"><span class="close-modal" id="closeAccountModal">&times;</span>
+            <div class="modal-content" style="max-width:620px;">
+                <span class="close-modal" id="closeAccountModal">&times;</span>
                 <h2 style="margin-bottom:1.5rem;"><i class="fas fa-user-plus"></i> Ouverture de compte Nova</h2>
-                <form id="accountForm">
+                <form id="accountForm" autocomplete="off">
+
+                    <!-- Identité -->
                     <div class="form-row">
-                        <div class="form-group"><label>Nom *</label><input type="text" id="lastName" required></div>
-                        <div class="form-group"><label>Prénom *</label><input type="text" id="firstName" required></div>
+                        <div class="form-group"><label>Nom *</label><input type="text" id="lastName" required placeholder="Votre nom"></div>
+                        <div class="form-group"><label>Prénom *</label><input type="text" id="firstName" required placeholder="Votre prénom"></div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group"><label>Email *</label><input type="email" id="email" required></div>
-                        <div class="form-group"><label>Téléphone *</label><input type="tel" id="phone" required></div>
+                        <div class="form-group"><label>Email *</label><input type="email" id="email" required placeholder="exemple@email.com"></div>
+                        <div class="form-group"><label>Téléphone *</label><input type="tel" id="phone" required placeholder="+33 6 12 34 56 78"></div>
                     </div>
-                    <div class="form-group"><label>Mot de passe * (min. 6 caractères)</label><input type="password" id="password" required minlength="6"></div>
+                    <div class="form-group"><label>Mot de passe * (min. 8 caractères)</label><input type="password" id="password" required minlength="8" placeholder="Minimum 8 caractères"></div>
                     <div class="form-group"><label>Adresse complète *</label><textarea id="address" rows="2" required placeholder="Numéro, rue, code postal, ville"></textarea></div>
+
+                    <!-- 1. PAYS -->
+                    <div class="form-group">
+                        <label><i class="fas fa-globe"></i> Pays de résidence * <span style="font-size:0.75rem;color:var(--text-muted);">(devise unique : Euro €)</span></label>
+                        <div style="position:relative;">
+                            <select id="countrySelect" required onchange="onCountryChange()" style="width:100%;padding:0.8rem 1rem 0.8rem 3rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:'Inter',sans-serif;font-size:0.95rem;appearance:none;background:white;cursor:pointer;">
+                                <option value="">🌍 Sélectionnez votre pays…</option>
+                            </select>
+                            <span id="countryFlagDisplay" style="position:absolute;left:0.9rem;top:50%;transform:translateY(-50%);font-size:1.3rem;pointer-events:none;"></span>
+                        </div>
+                    </div>
+
+                    <!-- 2. TYPE DE COMPTE -->
+                    <div class="form-group">
+                        <label><i class="fas fa-wallet"></i> Type de compte *</label>
+                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.8rem;margin-top:0.4rem;">
+                            <label class="account-type-card" id="atCard0">
+                                <input type="radio" name="accountType" value="Compte Courant" required>
+                                <div class="at-inner">
+                                    <i class="fas fa-credit-card"></i>
+                                    <span>Compte Courant</span>
+                                    <small>Opérations quotidiennes</small>
+                                </div>
+                            </label>
+                            <label class="account-type-card" id="atCard1">
+                                <input type="radio" name="accountType" value="Épargne">
+                                <div class="at-inner">
+                                    <i class="fas fa-piggy-bank"></i>
+                                    <span>Épargne</span>
+                                    <small>Livret Nova+ 4% brut</small>
+                                </div>
+                            </label>
+                            <label class="account-type-card" id="atCard2">
+                                <input type="radio" name="accountType" value="Entreprise">
+                                <div class="at-inner">
+                                    <i class="fas fa-building"></i>
+                                    <span>Entreprise</span>
+                                    <small>Compte professionnel</small>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 4. IFU / NIF selon pays -->
+                    <div class="form-group" id="ifuGroup" style="display:none;">
+                        <label id="ifuLabel"><i class="fas fa-id-card"></i> IFU / NIF *</label>
+                        <input type="text" id="ifuInput" placeholder="Saisir votre numéro fiscal" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:monospace;letter-spacing:1px;">
+                        <small id="ifuHint" style="color:var(--text-muted);font-size:0.78rem;margin-top:0.3rem;display:block;"></small>
+                        <div id="ifuError" style="color:var(--error);font-size:0.8rem;margin-top:0.3rem;display:none;"></div>
+                    </div>
+
+                    <!-- Situation financière -->
                     <div class="form-row">
-                        <div class="form-group"><label>Salaire mensuel net (€) *</label><input type="number" id="salary" required step="100" min="0"></div>
-                        <div class="form-group"><label>Situation matrimoniale *</label><select id="maritalStatus" required><option value="">Sélectionner</option><option>Célibataire</option><option>Marié(e)</option><option>Pacsé(e)</option><option>Divorcé(e)</option><option>Veuf/Veuve</option></select></div>
+                        <div class="form-group"><label>Salaire mensuel net (€) *</label><input type="number" id="salary" required step="100" min="0" placeholder="Ex : 2500"></div>
+                        <div class="form-group"><label>Situation matrimoniale *</label>
+                            <select id="maritalStatus" required style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:'Inter',sans-serif;">
+                                <option value="">Sélectionner</option>
+                                <option>Célibataire</option><option>Marié(e)</option>
+                                <option>Pacsé(e)</option><option>Divorcé(e)</option><option>Veuf/Veuve</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-group"><label>Justificatif de domicile (PDF, JPG, PNG) *</label>
-                        <div class="file-upload" onclick="document.getElementById('proofFile').click()"><i class="fas fa-cloud-upload-alt"></i> Cliquez pour télécharger<input type="file" id="proofFile" accept=".pdf,.jpg,.jpeg,.png" style="display:none" required></div>
-                        <div id="proofFileName" class="file-list"></div>
+                    <div class="form-group"><label>Profession *</label><input type="text" id="profession" required placeholder="Ex : Ingénieur, Médecin…"></div>
+                    <div class="form-group"><label>Revenus annuels supplémentaires (optionnel)</label><input type="number" id="extraIncome" step="100" placeholder="0"></div>
+
+                    <!-- Justificatif de domicile -->
+                    <div class="form-group"><label><i class="fas fa-home"></i> Justificatif de domicile (PDF, JPG, PNG) *</label>
+                        <div class="file-upload" onclick="document.getElementById('proofFile').click()">
+                            <i class="fas fa-cloud-upload-alt"></i> Cliquez pour télécharger
+                            <input type="file" id="proofFile" accept=".pdf,.jpg,.jpeg,.png" style="display:none" required>
+                        </div>
+                        <div id="proofFileName"></div>
                     </div>
+
+                    <!-- 5. CNI / PASSEPORT — capture automatique recto-verso -->
+                    <div class="biometric-section" style="margin-bottom:1.2rem;">
+                        <label><i class="fas fa-id-card"></i> Carte Nationale d'Identité ou Passeport — Capture automatique *</label>
+                        <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem;">Placez votre document face à la caméra. Le système détecte automatiquement si la pièce est lisible.</p>
+
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:0.8rem;">
+                            <!-- Recto -->
+                            <div style="text-align:center;">
+                                <div style="font-size:0.8rem;font-weight:600;margin-bottom:0.5rem;"><i class="fas fa-id-card"></i> Recto</div>
+                                <div class="webcam-container" style="width:100%;height:130px;border-radius:12px;">
+                                    <video id="cniVideo" autoplay playsinline style="width:100%;height:100%;object-fit:cover;"></video>
+                                    <canvas id="cniCanvas" style="display:none;"></canvas>
+                                </div>
+                                <div id="cniRectoStatus" style="font-size:0.75rem;margin-top:0.5rem;color:var(--text-muted);">⏳ En attente…</div>
+                                <div id="cniRectoPreview" style="display:none;margin-top:0.5rem;">
+                                    <img id="cniRectoImg" style="width:100%;border-radius:8px;border:2px solid var(--success);" alt="Recto">
+                                    <span style="font-size:0.75rem;color:var(--success);">✅ Recto capturé</span>
+                                </div>
+                            </div>
+                            <!-- Verso -->
+                            <div style="text-align:center;">
+                                <div style="font-size:0.8rem;font-weight:600;margin-bottom:0.5rem;"><i class="fas fa-id-card" style="transform:scaleX(-1);display:inline-block;"></i> Verso</div>
+                                <div class="webcam-container" style="width:100%;height:130px;border-radius:12px;">
+                                    <video id="cniVideoVerso" autoplay playsinline style="width:100%;height:100%;object-fit:cover;"></video>
+                                    <canvas id="cniCanvasVerso" style="display:none;"></canvas>
+                                </div>
+                                <div id="cniVersoStatus" style="font-size:0.75rem;margin-top:0.5rem;color:var(--text-muted);">⏳ Recto d'abord…</div>
+                                <div id="cniVersoPreview" style="display:none;margin-top:0.5rem;">
+                                    <img id="cniVersoImg" style="width:100%;border-radius:8px;border:2px solid var(--success);" alt="Verso">
+                                    <span style="font-size:0.75rem;color:var(--success);">✅ Verso capturé</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="cniGlobalStatus" style="text-align:center;font-size:0.82rem;padding:0.6rem;border-radius:10px;background:rgba(0,127,110,0.06);">📷 Positionnez la pièce face à la caméra — capture automatique dès détection</div>
+                    </div>
+
+                    <!-- Face ID -->
                     <div class="biometric-section">
                         <label><i class="fas fa-fingerprint"></i> Vérification biométrique — Face ID automatique *</label>
                         <div class="liveness-wrap" style="margin:1rem auto 0.5rem;display:block;width:180px;">
@@ -1494,11 +1643,10 @@
                         </div>
                         <div id="biometricStatus" class="biometric-status" style="margin-top:0.5rem;">⏳ Chargement du Face ID…</div>
                     </div>
-                    <div class="form-group"><label>Profession *</label><input type="text" id="profession" required></div>
-                    <div class="form-group"><label>Revenus annuels supplémentaires (optionnel)</label><input type="number" id="extraIncome" step="100"></div>
-                    <button type="submit" class="btn-primary" style="width:100%; padding:1rem;"><i class="fas fa-check-circle"></i> Valider ma création de compte</button>
+
+                    <button type="submit" class="btn-primary" style="width:100%;padding:1rem;margin-top:0.5rem;"><i class="fas fa-check-circle"></i> Valider ma création de compte</button>
                 </form>
-                <p style="text-align:center; margin-top:1rem; font-size:0.8rem;">Tous les champs sont obligatoires. Votre demande sera traitée sous 48h maximum.</p>
+                <p style="text-align:center;margin-top:1rem;font-size:0.8rem;">Tous les champs sont obligatoires. Votre demande sera traitée sous 48h maximum.</p>
             </div>
         </div>
 
@@ -1508,27 +1656,6 @@
                 <form id="loginForm">
                     <div class="form-group"><label>Email *</label><input type="email" id="loginEmail" required></div>
                     <div class="form-group"><label>Mot de passe *</label><input type="password" id="loginPassword" required></div>
-                    <div class="biometric-section">
-                        <label><i class="fas fa-fingerprint"></i> Vérification biométrique — Face ID automatique *</label>
-                        <div class="liveness-wrap" style="margin:1rem auto 0.5rem;display:block;width:180px;">
-                            <div class="webcam-container" style="margin:0;">
-                                <video id="loginWebcamVideo" autoplay playsinline></video>
-                            </div>
-                            <div class="liveness-overlay" id="loginLivenessOverlay">
-                                <div class="liveness-arrow" id="loginLivenessArrow">↕</div>
-                                <div id="loginLivenessInstruction" style="font-size:0.7rem;margin-top:0.3rem;"></div>
-                            </div>
-                        </div>
-                        <div class="liveness-steps" style="justify-content:center;">
-                            <div class="liveness-dot" id="ldot0"></div>
-                            <div class="liveness-dot" id="ldot1"></div>
-                            <div class="liveness-dot" id="ldot2"></div>
-                            <div class="liveness-dot" id="ldot3"></div>
-                            <div class="liveness-dot" id="ldot4"></div>
-                        </div>
-                        <div id="loginBiometricStatus" class="biometric-status" style="margin-top:0.5rem;">⏳ Chargement du Face ID…</div>
-                        <p style="font-size:0.72rem;color:var(--text-muted);margin-top:0.5rem;"><i class="fas fa-brain"></i> Suivez les instructions — capture automatique</p>
-                    </div>
                     <button type="submit" class="btn-primary" style="width:100%; padding:1rem;"><i class="fas fa-lock"></i> Se connecter</button>
                     <div id="loginError" class="login-error"></div>
                 </form>
@@ -1557,13 +1684,10 @@
             let userBalances = JSON.parse(localStorage.getItem('novaBalances')) || {};
             let userTransactions = JSON.parse(localStorage.getItem('novaTransactions')) || {};
 
-            // Variables pour les captures
-            let capturedPhoto = null,
-                loginCapturedPhoto = null;
+            // Variables pour les captures (inscription uniquement)
+            let capturedPhoto = null;
             let capturedFaceDescriptor = null;   // Float32Array stocké à l'inscription
-            let loginFaceDescriptor = null;       // Float32Array calculé à la connexion
-            let mediaStream = null,
-                loginMediaStream = null;
+            let mediaStream = null;
             let proofFileData = null;
             let faceModelsLoaded = false;
 
@@ -1604,18 +1728,15 @@
                 const demoAccountNumber = generateAccountNumber();
                 const demo = {
                     id: Date.now(),
-                    lastName: "Dupont",
-                    firstName: "Jean",
+                    lastName: "Dupont", firstName: "Jean",
                     email: "test@novafinance.com",
-                    password: hashedPwd, // Fix #5 : stocké haché
+                    password: hashedPwd,
                     phone: "0612345678",
                     address: "15 Avenue des Champs-Élysées, 75008 Paris",
-                    salary: 3500,
-                    maritalStatus: "Marié(e)",
-                    profession: "Consultant",
-                    extraIncome: 500,
-                    accountNumber: demoAccountNumber,
-                    photoBase64: null,
+                    salary: 3500, maritalStatus: "Marié(e)", profession: "Consultant",
+                    extraIncome: 500, accountNumber: demoAccountNumber,
+                    photoBase64: null, faceDescriptor: null,
+                    status: 'approved', // Compte moteur toujours approuvé
                     registrationDate: new Date().toLocaleString()
                 };
                 users.push(demo);
@@ -1702,6 +1823,12 @@
                 if (document.getElementById('pMarital'))     document.getElementById('pMarital').textContent     = currentUser.maritalStatus;
                 if (document.getElementById('pProfession'))  document.getElementById('pProfession').textContent  = currentUser.profession;
                 if (document.getElementById('pDate'))        document.getElementById('pDate').textContent        = currentUser.registrationDate;
+                // Pays, type de compte, RIB, IFU
+                if (document.getElementById('pCountry'))     document.getElementById('pCountry').textContent     = currentUser.country ? `${currentUser.countryCode ? countryFlag(currentUser.countryCode) : ''} ${currentUser.country}` : '—';
+                if (document.getElementById('pAccountType')) document.getElementById('pAccountType').textContent = currentUser.accountType || '—';
+                if (document.getElementById('pIfu'))         document.getElementById('pIfu').textContent         = currentUser.ifu || '—';
+                if (document.getElementById('pRib'))         document.getElementById('pRib').textContent         = currentUser.rib || '—';
+                if (document.getElementById('pBic'))         document.getElementById('pBic').textContent         = currentUser.bic || '—';
                 // Photo de profil
                 const photoImg = document.getElementById('profilePhotoImg');
                 if (photoImg) {
@@ -1772,7 +1899,6 @@
             document.getElementById('loginBtn').onclick = () => {
                 if (!currentUser) {
                     loginModal.style.display = 'block';
-                    initLoginWebcam();
                 } else showToast("Déjà connecté", "error");
             };
             document.getElementById('closeAccountModal').onclick = () => {
@@ -1781,7 +1907,6 @@
             };
             document.getElementById('closeLoginModal').onclick = () => {
                 loginModal.style.display = 'none';
-                if (loginMediaStream) loginMediaStream.getTracks().forEach(t => t.stop());
             };
             window.onclick = (e) => {
                 if (e.target === accountModal) {
@@ -1790,7 +1915,6 @@
                 }
                 if (e.target === loginModal) {
                     loginModal.style.display = 'none';
-                    if (loginMediaStream) loginMediaStream.getTracks().forEach(t => t.stop());
                 }
             };
 
@@ -1951,28 +2075,6 @@
                 }
             }
 
-            async function initLoginWebcam() {
-                try {
-                    if (loginMediaStream) loginMediaStream.getTracks().forEach(t => t.stop());
-                    loginMediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    const vid = document.getElementById('loginWebcamVideo');
-                    vid.srcObject = loginMediaStream;
-                    document.getElementById('loginBiometricStatus').innerHTML = '⏳ Chargement du Face ID…';
-                    await loadFaceModels();
-                    document.getElementById('loginBiometricStatus').innerHTML = '👁 Suivez les instructions';
-                    runLiveness(vid,
-                        document.getElementById('loginBiometricStatus'),
-                        document.getElementById('loginLivenessOverlay'),
-                        document.getElementById('loginLivenessArrow'),
-                        document.getElementById('loginLivenessInstruction'),
-                        'ldot',
-                        (photo, desc) => { loginCapturedPhoto = photo; loginFaceDescriptor = desc; }
-                    );
-                } catch (e) {
-                    document.getElementById('loginBiometricStatus').innerHTML = '❌ Caméra refusée';
-                }
-            }
-
             document.getElementById('proofFile').onchange = (e) => {
                 if (e.target.files[0]) {
                     proofFileData = e.target.files[0];
@@ -1980,155 +2082,134 @@
                 }
             };
 
-            // Inscription avec validation JS de tous les champs (y compris ceux qui pourraient ne pas être couverts par required)
+            // Inscription — validation complète avec pays, type compte, IFU/NIF, CNI, RIB
             document.getElementById('accountForm').onsubmit = async (e) => {
                 e.preventDefault();
-                // Vérification manuelle de tous les champs obligatoires
-                const requiredFields = ['lastName', 'firstName', 'email', 'phone', 'password', 'address', 'salary', 'maritalStatus', 'profession'];
-                let missing = false;
+                const requiredFields = ['lastName','firstName','email','phone','password','address','salary','maritalStatus','profession'];
                 for (let field of requiredFields) {
-                    const val = document.getElementById(field).value.trim();
-                    if (!val) {
-                        showToast(`Veuillez renseigner le champ ${field}`, "error");
-                        missing = true;
-                        return;
-                    }
+                    if (!document.getElementById(field).value.trim()) { showToast(`Champ manquant : ${field}`, "error"); return; }
                 }
-                if (document.getElementById('password').value.length < 6) {
-                    showToast("Le mot de passe doit contenir au moins 6 caractères", "error");
+                if (document.getElementById('password').value.length < 8) { showToast("Mot de passe minimum 8 caractères", "error"); return; }
+                const countryCode = document.getElementById('countrySelect').value;
+                if (!countryCode) { showToast("Veuillez sélectionner votre pays", "error"); return; }
+                const countryObj = COUNTRIES.find(c => c.code === countryCode);
+                const countryName = countryObj ? countryObj.name : countryCode;
+                const accountTypeEl = document.querySelector('input[name="accountType"]:checked');
+                if (!accountTypeEl) { showToast("Veuillez choisir un type de compte", "error"); return; }
+                const ifuValue = document.getElementById('ifuInput').value.trim();
+                if (!ifuValue) { showToast("Veuillez renseigner votre IFU/NIF", "error"); return; }
+                if (!validateIFU(countryCode, ifuValue)) {
+                    document.getElementById('ifuError').textContent = `❌ Format incorrect. ${(IFU_CONFIG[countryCode]||IFU_CONFIG.DEFAULT).hint}`;
+                    document.getElementById('ifuError').style.display = 'block';
                     return;
                 }
-                if (!capturedPhoto || !capturedFaceDescriptor) {
-                    showToast("Veuillez capturer votre visage", "error");
-                    return;
-                }
-                if (!proofFileData) {
-                    showToast("Veuillez fournir un justificatif de domicile", "error");
-                    return;
-                }
-                const email = document.getElementById('email').value;
-                if (users.find(u => u.email === email)) {
-                    showToast("Cet email est déjà utilisé", "error");
-                    return;
-                }
-
-                const rawPwd = document.getElementById('password').value;
-                const hashedPwd = await hashPassword(rawPwd); // Fix #5 : hachage avant stockage
+                document.getElementById('ifuError').style.display = 'none';
+                if (!cniRectoData || !cniVersoData) { showToast("Attendez la capture recto-verso automatique de votre pièce d'identité", "error"); return; }
+                if (!capturedPhoto || !capturedFaceDescriptor) { showToast("Complétez la vérification Face ID", "error"); return; }
+                if (!proofFileData) { showToast("Fournissez un justificatif de domicile", "error"); return; }
+                const emailVal = document.getElementById('email').value.trim().toLowerCase();
+                if (users.find(u => u.email.toLowerCase() === emailVal)) { showToast("Cet email est déjà utilisé", "error"); return; }
+                const rib = generateRIB(countryCode);
+                const hashedPwd = await hashPassword(document.getElementById('password').value);
                 const newUser = {
                     id: Date.now(),
-                    lastName: document.getElementById('lastName').value,
-                    firstName: document.getElementById('firstName').value,
-                    email: email,
-                    password: hashedPwd, // Fix #5 : mot de passe haché
-                    phone: document.getElementById('phone').value,
-                    address: document.getElementById('address').value,
+                    lastName: sanitize(document.getElementById('lastName').value),
+                    firstName: sanitize(document.getElementById('firstName').value),
+                    email: emailVal, password: hashedPwd,
+                    phone: sanitize(document.getElementById('phone').value),
+                    address: sanitize(document.getElementById('address').value),
+                    country: countryName, countryCode,
+                    accountType: accountTypeEl.value,
+                    ifu: sanitize(ifuValue.toUpperCase()),
+                    rib: rib.iban, bic: rib.bic,
                     salary: parseFloat(document.getElementById('salary').value),
                     maritalStatus: document.getElementById('maritalStatus').value,
-                    profession: document.getElementById('profession').value,
+                    profession: sanitize(document.getElementById('profession').value),
                     extraIncome: parseFloat(document.getElementById('extraIncome').value) || 0,
                     accountNumber: generateAccountNumber(),
                     photoBase64: capturedPhoto,
-                    faceDescriptor: Array.from(capturedFaceDescriptor), // vecteur biométrique 128D
-                    registrationDate: new Date().toLocaleString()
+                    faceDescriptor: Array.from(capturedFaceDescriptor),
+                    cniRecto: cniRectoData, cniVerso: cniVersoData,
+                    status: 'pending', // En attente de vérification admin (48h)
+                    registrationDate: new Date().toLocaleString('fr-FR')
                 };
                 users.push(newUser);
                 localStorage.setItem('novaUsers', JSON.stringify(users));
-                userBalances[email] = 10000;
-                userTransactions[email] = [{
-                    label: "Bienvenue chez Nova",
-                    date: new Date().toLocaleDateString(),
-                    amount: 10000,
-                    type: "credit"
-                }];
+                userBalances[emailVal] = 0;
+                userTransactions[emailVal] = [{ label:"Bienvenue chez NovaFinance", date:new Date().toLocaleDateString('fr-FR'), amount:0, type:"credit" }];
                 localStorage.setItem('novaBalances', JSON.stringify(userBalances));
                 localStorage.setItem('novaTransactions', JSON.stringify(userTransactions));
-
-                showToast("✅ Votre demande d'ouverture de compte est en cours de traitement. Réponse sous 48h maximum par courrier.", "success");
-
-                // Paramètres communs aux deux emails
-                const emailParams = {
-                    firstName:        newUser.firstName,
-                    lastName:         newUser.lastName,
-                    userEmail:        newUser.email,
-                    phone:            newUser.phone,
-                    address:          newUser.address,
-                    salary:           newUser.salary,
-                    profession:       newUser.profession,
-                    maritalStatus:    newUser.maritalStatus,
-                    accountNumber:    newUser.accountNumber,
-                    registrationDate: newUser.registrationDate
-                };
-
-                // Email 1 — Confirmation au client
-                emailjs.send("mzsr9eq", "cber6xh", emailParams)
-                .then(() => {
-                    showToast("📧 Email de confirmation envoyé au client !", "success");
-                }).catch((err) => {
-                    console.error("Erreur email client :", err);
-                    showToast("⚠️ Email client non envoyé — vérifiez le template cber6xh.", "error");
-                });
-
-                // Email 2 — Notification admin avec toutes les infos du client
-                emailjs.send("mzsr9eq", "d7u5eo7", emailParams)
-                .then(() => {
-                    console.log("✅ Notification admin envoyée.");
-                }).catch((err) => {
-                    console.error("Erreur email admin :", err);
-                });
+                const emailParams = { firstName:newUser.firstName, lastName:newUser.lastName, userEmail:newUser.email, phone:newUser.phone, address:newUser.address, salary:newUser.salary, profession:newUser.profession, maritalStatus:newUser.maritalStatus, accountNumber:newUser.accountNumber, registrationDate:newUser.registrationDate, country:newUser.country, accountType:newUser.accountType, rib:newUser.rib, ifu:newUser.ifu };
+                if (typeof emailjs !== 'undefined') {
+                    emailjs.send("mzsr9eq","cber6xh",emailParams).catch(err=>console.error('Email client:',err));
+                    emailjs.send("mzsr9eq","d7u5eo7",emailParams).catch(err=>console.error('Email admin:',err));
+                }
+                showToast("✅ Demande envoyée ! Réponse sous 48h.", "success");
                 accountModal.style.display = 'none';
                 document.getElementById('accountForm').reset();
-                capturedPhoto = null;
-                capturedFaceDescriptor = null;
-                proofFileData = null;
-                document.getElementById('biometricStatus').innerHTML = '⚠️ Aucune capture';
-                document.getElementById('proofFileName').innerHTML = '';
-                if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+                capturedPhoto=null; capturedFaceDescriptor=null; cniRectoData=null; cniVersoData=null; proofFileData=null;
+                document.getElementById('biometricStatus').innerHTML='⚠️ Aucune capture';
+                document.getElementById('proofFileName').innerHTML='';
+                document.getElementById('cniRectoPreview').style.display='none';
+                document.getElementById('cniVersoPreview').style.display='none';
+                if (mediaStream) mediaStream.getTracks().forEach(t=>t.stop());
+                if (cniStream) cniStream.getTracks().forEach(t=>t.stop());
+                if (cniVersoStream) cniVersoStream.getTracks().forEach(t=>t.stop());
             };
 
-            // Connexion avec vérification biométrique réelle (face-api.js)
+            // Connexion avec statut, brute-force — email + mot de passe uniquement
             document.getElementById('loginForm').onsubmit = async (e) => {
                 e.preventDefault();
                 const errorEl = document.getElementById('loginError');
-                if (!loginFaceDescriptor) {
-                    errorEl.innerText = "Veuillez vérifier votre visage avant de continuer";
+                errorEl.innerHTML = '';
+
+                // Anti brute-force
+                if (isLockedOut()) {
+                    const a = getLoginAttempts();
+                    const remaining = Math.ceil((a.lockedUntil - Date.now()) / 60000);
+                    errorEl.innerText = `🔒 Trop de tentatives. Réessayez dans ${remaining} minute(s).`;
                     return;
                 }
-                const email = document.getElementById('loginEmail').value;
-                const pwd = document.getElementById('loginPassword').value;
-                const hashedInput = await hashPassword(pwd);
-                const user = users.find(u => u.email === email && u.password === hashedInput);
+
+                const emailInput = document.getElementById('loginEmail').value.trim().toLowerCase();
+                const hashedInput = await hashPassword(document.getElementById('loginPassword').value);
+                const user = users.find(u => u.email.toLowerCase() === emailInput && u.password === hashedInput);
+
                 if (!user) {
-                    errorEl.innerText = "Email ou mot de passe incorrect";
+                    const a = recordFailedAttempt();
+                    const left = MAX_LOGIN_ATTEMPTS - a.count;
+                    errorEl.innerText = left > 0
+                        ? `Email ou mot de passe incorrect. (${left} tentative(s) restante(s))`
+                        : '🔒 Trop de tentatives. Compte bloqué 10 minutes.';
                     return;
                 }
-                // Comparaison biométrique réelle
-                if (user.faceDescriptor && user.faceDescriptor.length === 128) {
-                    const storedDescriptor = new Float32Array(user.faceDescriptor);
-                    const distance = faceapi.euclideanDistance(storedDescriptor, loginFaceDescriptor);
-                    // Seuil 0.55 : similitude stricte (0 = identique, >0.6 = personnes différentes)
-                    if (distance > 0.55) {
-                        errorEl.innerText = `Visage non reconnu (similarité insuffisante : ${(1 - distance).toFixed(2)*100 | 0}%). Repositionnez-vous et réessayez.`;
-                        return;
-                    }
-                } else {
-                    // Compte admin sans descripteur — on laisse passer (compte moteur interne)
-                    if (!isAdmin(user)) {
-                        recordFailedAttempt();
-                        errorEl.innerText = "Visage non reconnu. Réessayez.";
-                        return;
-                    }
+
+                // ── Vérification du statut du compte ──
+                if (user.status === 'pending') {
+                    errorEl.innerHTML = `<div style="background:rgba(233,196,106,0.12);border:1px solid rgba(233,196,106,0.4);border-radius:12px;padding:1rem;text-align:left;">
+                        <p style="font-weight:700;margin-bottom:0.4rem;">⏳ Compte en cours de vérification</p>
+                        <p style="font-size:0.85rem;margin-bottom:0.4rem;">Notre équipe examine vos documents et informations. Vous recevrez une réponse par email sous <strong>48h maximum</strong>.</p>
+                        <p style="font-size:0.8rem;color:var(--text-muted);">Contact : novafinancecollective@gmail.com &nbsp;|&nbsp; +33 6 89 67 73 08</p>
+                    </div>`;
+                    return;
                 }
-                // Connexion réussie
+                if (user.status === 'rejected') {
+                    errorEl.innerHTML = `<div style="background:rgba(231,111,81,0.08);border:1px solid rgba(231,111,81,0.3);border-radius:12px;padding:1rem;text-align:left;">
+                        <p style="font-weight:700;margin-bottom:0.4rem;color:var(--error);">❌ Demande rejetée</p>
+                        <p style="font-size:0.85rem;margin-bottom:0.4rem;">Après vérification, nous n'avons pas pu confirmer votre identité.<br><em>Motif : identité non vérifiée ou difficile à confirmer.</em></p>
+                        <p style="font-size:0.8rem;color:var(--text-muted);">Pour contester : novafinancecollective@gmail.com</p>
+                    </div>`;
+                    return;
+                }
+
+                // ── Connexion réussie — email + mot de passe uniquement ──
                 resetLoginAttempts();
                 currentUser = user;
                 sessionStorage.setItem('novaCurrentUser', JSON.stringify(user));
                 updateUIForUser();
                 resetSessionTimer();
                 loginModal.style.display = 'none';
-                if (loginMediaStream) loginMediaStream.getTracks().forEach(t => t.stop());
                 document.getElementById('loginForm').reset();
-                loginCapturedPhoto = null;
-                loginFaceDescriptor = null;
                 errorEl.innerText = "";
             };
 
@@ -2238,7 +2319,294 @@
             }
 
             // ═══════════════════════════════════════════════
-            // SÉCURITÉ — Protection contre brute-force & XSS
+            // PAYS — 195 pays avec drapeaux emoji
+            // ═══════════════════════════════════════════════
+            const COUNTRIES = [
+                {code:'AF',name:'Afghanistan'},{code:'ZA',name:'Afrique du Sud'},{code:'AL',name:'Albanie'},
+                {code:'DZ',name:'Algérie'},{code:'DE',name:'Allemagne'},{code:'AD',name:'Andorre'},
+                {code:'AO',name:'Angola'},{code:'AG',name:'Antigua-et-Barbuda'},{code:'SA',name:'Arabie Saoudite'},
+                {code:'AR',name:'Argentine'},{code:'AM',name:'Arménie'},{code:'AU',name:'Australie'},
+                {code:'AT',name:'Autriche'},{code:'AZ',name:'Azerbaïdjan'},{code:'BS',name:'Bahamas'},
+                {code:'BH',name:'Bahreïn'},{code:'BD',name:'Bangladesh'},{code:'BB',name:'Barbade'},
+                {code:'BY',name:'Biélorussie'},{code:'BE',name:'Belgique'},{code:'BZ',name:'Belize'},
+                {code:'BJ',name:'Bénin'},{code:'BT',name:'Bhoutan'},{code:'BO',name:'Bolivie'},
+                {code:'BA',name:'Bosnie-Herzégovine'},{code:'BW',name:'Botswana'},{code:'BR',name:'Brésil'},
+                {code:'BN',name:'Brunéi'},{code:'BG',name:'Bulgarie'},{code:'BF',name:'Burkina Faso'},
+                {code:'BI',name:'Burundi'},{code:'CV',name:'Cap-Vert'},{code:'KH',name:'Cambodge'},
+                {code:'CM',name:'Cameroun'},{code:'CA',name:'Canada'},{code:'CF',name:'Centrafrique'},
+                {code:'CL',name:'Chili'},{code:'CN',name:'Chine'},{code:'CY',name:'Chypre'},
+                {code:'CO',name:'Colombie'},{code:'KM',name:'Comores'},{code:'CG',name:'Congo'},
+                {code:'CD',name:'Congo (RDC)'},{code:'KR',name:'Corée du Sud'},{code:'KP',name:'Corée du Nord'},
+                {code:'CR',name:'Costa Rica'},{code:'CI',name:"Côte d'Ivoire"},{code:'HR',name:'Croatie'},
+                {code:'CU',name:'Cuba'},{code:'DK',name:'Danemark'},{code:'DJ',name:'Djibouti'},
+                {code:'DO',name:'Rép. Dominicaine'},{code:'EG',name:'Égypte'},{code:'AE',name:'Émirats Arabes Unis'},
+                {code:'EC',name:'Équateur'},{code:'ER',name:'Érythrée'},{code:'ES',name:'Espagne'},
+                {code:'EE',name:'Estonie'},{code:'SZ',name:'Eswatini'},{code:'ET',name:'Éthiopie'},
+                {code:'FJ',name:'Fidji'},{code:'FI',name:'Finlande'},{code:'FR',name:'France'},
+                {code:'GA',name:'Gabon'},{code:'GM',name:'Gambie'},{code:'GE',name:'Géorgie'},
+                {code:'GH',name:'Ghana'},{code:'GR',name:'Grèce'},{code:'GD',name:'Grenade'},
+                {code:'GT',name:'Guatemala'},{code:'GN',name:'Guinée'},{code:'GW',name:'Guinée-Bissau'},
+                {code:'GQ',name:'Guinée Équatoriale'},{code:'GY',name:'Guyana'},{code:'HT',name:'Haïti'},
+                {code:'HN',name:'Honduras'},{code:'HU',name:'Hongrie'},{code:'IN',name:'Inde'},
+                {code:'ID',name:'Indonésie'},{code:'IQ',name:'Irak'},{code:'IR',name:'Iran'},
+                {code:'IE',name:'Irlande'},{code:'IS',name:'Islande'},{code:'IL',name:'Israël'},
+                {code:'IT',name:'Italie'},{code:'JM',name:'Jamaïque'},{code:'JP',name:'Japon'},
+                {code:'JO',name:'Jordanie'},{code:'KZ',name:'Kazakhstan'},{code:'KE',name:'Kenya'},
+                {code:'KG',name:'Kirghizistan'},{code:'KI',name:'Kiribati'},{code:'KW',name:'Koweït'},
+                {code:'LA',name:'Laos'},{code:'LS',name:'Lesotho'},{code:'LV',name:'Lettonie'},
+                {code:'LB',name:'Liban'},{code:'LR',name:'Liberia'},{code:'LY',name:'Libye'},
+                {code:'LI',name:'Liechtenstein'},{code:'LT',name:'Lituanie'},{code:'LU',name:'Luxembourg'},
+                {code:'MG',name:'Madagascar'},{code:'MY',name:'Malaisie'},{code:'MW',name:'Malawi'},
+                {code:'MV',name:'Maldives'},{code:'ML',name:'Mali'},{code:'MT',name:'Malte'},
+                {code:'MA',name:'Maroc'},{code:'MH',name:'Îles Marshall'},{code:'MU',name:'Maurice'},
+                {code:'MR',name:'Mauritanie'},{code:'MX',name:'Mexique'},{code:'FM',name:'Micronésie'},
+                {code:'MD',name:'Moldavie'},{code:'MC',name:'Monaco'},{code:'MN',name:'Mongolie'},
+                {code:'ME',name:'Monténégro'},{code:'MZ',name:'Mozambique'},{code:'MM',name:'Myanmar'},
+                {code:'NA',name:'Namibie'},{code:'NR',name:'Nauru'},{code:'NP',name:'Népal'},
+                {code:'NI',name:'Nicaragua'},{code:'NE',name:'Niger'},{code:'NG',name:'Nigeria'},
+                {code:'NO',name:'Norvège'},{code:'NZ',name:'Nouvelle-Zélande'},{code:'OM',name:'Oman'},
+                {code:'UG',name:'Ouganda'},{code:'UZ',name:'Ouzbékistan'},{code:'PK',name:'Pakistan'},
+                {code:'PW',name:'Palaos'},{code:'PA',name:'Panama'},{code:'PG',name:'Papouasie'},
+                {code:'PY',name:'Paraguay'},{code:'NL',name:'Pays-Bas'},{code:'PE',name:'Pérou'},
+                {code:'PH',name:'Philippines'},{code:'PL',name:'Pologne'},{code:'PT',name:'Portugal'},
+                {code:'QA',name:'Qatar'},{code:'RO',name:'Roumanie'},{code:'GB',name:'Royaume-Uni'},
+                {code:'RU',name:'Russie'},{code:'RW',name:'Rwanda'},{code:'KN',name:'Saint-Kitts'},
+                {code:'LC',name:'Sainte-Lucie'},{code:'VC',name:'Saint-Vincent'},{code:'WS',name:'Samoa'},
+                {code:'SM',name:'Saint-Marin'},{code:'ST',name:'Sao Tomé'},{code:'SN',name:'Sénégal'},
+                {code:'RS',name:'Serbie'},{code:'SC',name:'Seychelles'},{code:'SL',name:'Sierra Leone'},
+                {code:'SG',name:'Singapour'},{code:'SK',name:'Slovaquie'},{code:'SI',name:'Slovénie'},
+                {code:'SO',name:'Somalie'},{code:'SD',name:'Soudan'},{code:'SS',name:'Soudan du Sud'},
+                {code:'LK',name:'Sri Lanka'},{code:'SE',name:'Suède'},{code:'CH',name:'Suisse'},
+                {code:'SR',name:'Suriname'},{code:'SY',name:'Syrie'},{code:'TJ',name:'Tadjikistan'},
+                {code:'TZ',name:'Tanzanie'},{code:'TD',name:'Tchad'},{code:'CZ',name:'Tchéquie'},
+                {code:'TH',name:'Thaïlande'},{code:'TL',name:'Timor oriental'},{code:'TG',name:'Togo'},
+                {code:'TO',name:'Tonga'},{code:'TT',name:'Trinité-et-Tobago'},{code:'TN',name:'Tunisie'},
+                {code:'TM',name:'Turkménistan'},{code:'TR',name:'Turquie'},{code:'TV',name:'Tuvalu'},
+                {code:'UA',name:'Ukraine'},{code:'UY',name:'Uruguay'},{code:'US',name:'États-Unis'},
+                {code:'VU',name:'Vanuatu'},{code:'VE',name:'Venezuela'},{code:'VN',name:'Viêt Nam'},
+                {code:'YE',name:'Yémen'},{code:'ZM',name:'Zambie'},{code:'ZW',name:'Zimbabwe'}
+            ];
+
+            function countryFlag(code) {
+                return code.toUpperCase().replace(/./g, c =>
+                    String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65));
+            }
+
+            // Rempli le select pays
+            const csel = document.getElementById('countrySelect');
+            COUNTRIES.sort((a,b) => a.name.localeCompare(b.name,'fr')).forEach(c => {
+                const o = document.createElement('option');
+                o.value = c.code;
+                o.textContent = `${countryFlag(c.code)} ${c.name}`;
+                csel.appendChild(o);
+            });
+
+            function onCountryChange() {
+                const code = document.getElementById('countrySelect').value;
+                const flag = document.getElementById('countryFlagDisplay');
+                flag.textContent = code ? countryFlag(code) : '';
+                updateIFUField(code);
+            }
+
+            // ═══════════════════════════════════════════════
+            // IFU / NIF par pays
+            // ═══════════════════════════════════════════════
+            const IFU_CONFIG = {
+                // Afrique de l'Ouest
+                BJ: { label:'IFU — Identifiant Fiscal Unique (Bénin)', hint:'13 chiffres exactement', pattern:/^\d{13}$/, example:'1234567890123' },
+                SN: { label:'NINEA — Numéro Identifiant National des Entreprises (Sénégal)', hint:'7 chiffres + 1 lettre + 2 chiffres', pattern:/^\d{7}[A-Z]\d{2}$/, example:'1234567A01' },
+                CI: { label:"NIF — Numéro d'Identification Fiscale (Côte d'Ivoire)", hint:'10 chiffres', pattern:/^\d{10}$/, example:'0123456789' },
+                CM: { label:'NIU — Numéro d\'Identifiant Unique (Cameroun)', hint:'14 chiffres', pattern:/^\d{14}$/, example:'12345678901234' },
+                TG: { label:'NIF — Numéro d\'Identification Fiscale (Togo)', hint:'10 à 13 chiffres', pattern:/^\d{10,13}$/, example:'1234567890' },
+                GN: { label:'NIF — Numéro d\'Identification Fiscale (Guinée)', hint:'9 chiffres', pattern:/^\d{9}$/, example:'123456789' },
+                BF: { label:'NIF — Numéro d\'Identification Fiscale (Burkina Faso)', hint:'11 chiffres', pattern:/^\d{11}$/, example:'12345678901' },
+                ML: { label:'NIF — Numéro d\'Identification Fiscale (Mali)', hint:'8 chiffres', pattern:/^\d{8}$/, example:'12345678' },
+                NE: { label:'NIF — Numéro d\'Identification Fiscale (Niger)', hint:'8 chiffres + 1 lettre', pattern:/^\d{8}[A-Z]$/, example:'12345678A' },
+                NG: { label:'TIN — Tax Identification Number (Nigeria)', hint:'10 ou 11 chiffres', pattern:/^\d{10,11}$/, example:'1234567890' },
+                GH: { label:'TIN — Taxpayer Identification Number (Ghana)', hint:'11 chiffres', pattern:/^\d{11}$/, example:'12345678901' },
+                MA: { label:'IF — Identifiant Fiscal (Maroc)', hint:'8 à 10 chiffres', pattern:/^\d{8,10}$/, example:'12345678' },
+                DZ: { label:'NIF — Numéro d\'Identification Fiscale (Algérie)', hint:'15 chiffres', pattern:/^\d{15}$/, example:'123456789012345' },
+                TN: { label:'MF — Matricule Fiscal (Tunisie)', hint:'7 chiffres + 1 lettre + 3 chiffres + 1 lettre', pattern:/^\d{7}[A-Z]\d{3}[A-Z]$/, example:'1234567A000B' },
+                EG: { label:'TRN — Tax Registration Number (Égypte)', hint:'9 chiffres', pattern:/^\d{9}$/, example:'123456789' },
+                RW: { label:'TIN — Taxpayer Identification Number (Rwanda)', hint:'9 chiffres', pattern:/^\d{9}$/, example:'123456789' },
+                ET: { label:'TIN — Tax Identification Number (Éthiopie)', hint:'10 chiffres', pattern:/^\d{10}$/, example:'1234567890' },
+                KE: { label:'KRA PIN — Kenya Revenue Authority PIN', hint:'1 lettre + 9 chiffres + 1 lettre', pattern:/^[A-Z]\d{9}[A-Z]$/, example:'A123456789B' },
+                TZ: { label:'TIN — Tax Identification Number (Tanzanie)', hint:'9 chiffres', pattern:/^\d{9}$/, example:'123456789' },
+                ZA: { label:'SARS TRN — Tax Reference Number (Afrique du Sud)', hint:'10 chiffres', pattern:/^\d{10}$/, example:'1234567890' },
+                CD: { label:'NIF — Numéro d\'Identification Fiscale (RDC)', hint:'12 chiffres', pattern:/^\d{12}$/, example:'123456789012' },
+                AO: { label:'NIF — Número de Identificação Fiscal (Angola)', hint:'10 chiffres', pattern:/^\d{10}$/, example:'1234567890' },
+                MZ: { label:'NUIT — Número Único de Identificação Tributária (Mozambique)', hint:'9 chiffres', pattern:/^\d{9}$/, example:'123456789' },
+                GA: { label:'NIF — Numéro d\'Identification Fiscale (Gabon)', hint:'10 chiffres', pattern:/^\d{10}$/, example:'1234567890' },
+                CG: { label:'NIU — Numéro d\'Identification Unique (Congo)', hint:'11 chiffres', pattern:/^\d{11}$/, example:'12345678901' },
+                // Europe
+                FR: { label:'NIF — Numéro d\'Identification Fiscale (France)', hint:'13 chiffres (numéro fiscal)', pattern:/^\d{13}$/, example:'1234567890123' },
+                DE: { label:'Steueridentifikationsnummer (Allemagne)', hint:'11 chiffres', pattern:/^\d{11}$/, example:'12345678901' },
+                ES: { label:'NIF — Número de Identificación Fiscal (Espagne)', hint:'8 chiffres + 1 lettre', pattern:/^\d{8}[A-Z]$/, example:'12345678A' },
+                IT: { label:'Codice Fiscale (Italie)', hint:'6 lettres + 2 chiffres + 1 lettre + 2 chiffres + 1 lettre + 3 chiffres + 1 lettre', pattern:/^[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]$/, example:'RSSMRA80A01H501U' },
+                BE: { label:'NIF — Numéro de Registre National (Belgique)', hint:'11 chiffres', pattern:/^\d{11}$/, example:'12345678901' },
+                PT: { label:'NIF — Número de Identificação Fiscal (Portugal)', hint:'9 chiffres', pattern:/^\d{9}$/, example:'123456789' },
+                NL: { label:'BSN — Burgerservicenummer (Pays-Bas)', hint:'9 chiffres', pattern:/^\d{9}$/, example:'123456789' },
+                PL: { label:'PESEL (Pologne)', hint:'11 chiffres', pattern:/^\d{11}$/, example:'12345678901' },
+                RO: { label:'CNP — Cod Numeric Personal (Roumanie)', hint:'13 chiffres', pattern:/^\d{13}$/, example:'1234567890123' },
+                GB: { label:'UTR — Unique Taxpayer Reference (Royaume-Uni)', hint:'10 chiffres', pattern:/^\d{10}$/, example:'1234567890' },
+                CH: { label:'AHV-Nummer / Numéro AVS (Suisse)', hint:'13 chiffres avec points: 756.XXXX.XXXX.XX', pattern:/^756\.\d{4}\.\d{4}\.\d{2}$/, example:'756.1234.5678.90' },
+                // Amérique
+                US: { label:'SSN / EIN — Social Security / Tax Number (USA)', hint:'9 chiffres (sans tirets)', pattern:/^\d{9}$/, example:'123456789' },
+                CA: { label:'SIN — Social Insurance Number (Canada)', hint:'9 chiffres', pattern:/^\d{9}$/, example:'123456789' },
+                BR: { label:'CPF — Cadastro de Pessoas Físicas (Brésil)', hint:'11 chiffres', pattern:/^\d{11}$/, example:'12345678901' },
+                MX: { label:'RFC — Registro Federal de Contribuyentes (Mexique)', hint:'13 caractères (4 lettres + 6 chiffres + 3 alphanum)', pattern:/^[A-Z]{4}\d{6}[A-Z0-9]{3}$/, example:'AAAA800101AA1' },
+                AR: { label:'CUIT — Clave Única de Identificación Tributaria (Argentine)', hint:'11 chiffres', pattern:/^\d{11}$/, example:'20123456789' },
+                CO: { label:'NIT — Número de Identificación Tributaria (Colombie)', hint:'9 à 10 chiffres', pattern:/^\d{9,10}$/, example:'123456789' },
+                // Asie
+                IN: { label:'PAN — Permanent Account Number (Inde)', hint:'5 lettres + 4 chiffres + 1 lettre', pattern:/^[A-Z]{5}\d{4}[A-Z]$/, example:'ABCDE1234F' },
+                CN: { label:'TIN — Tax Identification Number (Chine)', hint:'18 chiffres/lettres', pattern:/^[0-9A-Z]{18}$/, example:'123456789012345678' },
+                JP: { label:'マイナンバー — My Number (Japon)', hint:'12 chiffres', pattern:/^\d{12}$/, example:'123456789012' },
+                // Moyen-Orient
+                SA: { label:'NIN — National Identification Number (Arabie Saoudite)', hint:'10 chiffres', pattern:/^\d{10}$/, example:'1234567890' },
+                AE: { label:'TRN — Tax Registration Number (EAU)', hint:'15 chiffres', pattern:/^\d{15}$/, example:'123456789012345' },
+                DEFAULT: { label:'NIF / Numéro d\'Identification Fiscale', hint:'Saisir votre numéro fiscal national', pattern:/^.{5,20}$/, example:'' }
+            };
+
+            function updateIFUField(code) {
+                const config = IFU_CONFIG[code] || IFU_CONFIG.DEFAULT;
+                const group = document.getElementById('ifuGroup');
+                document.getElementById('ifuLabel').innerHTML = `<i class="fas fa-id-card"></i> ${config.label} *`;
+                document.getElementById('ifuHint').textContent = `Format requis : ${config.hint}${config.example ? ' — Ex : ' + config.example : ''}`;
+                document.getElementById('ifuInput').placeholder = config.example || 'Votre numéro fiscal';
+                document.getElementById('ifuInput').value = '';
+                document.getElementById('ifuError').style.display = 'none';
+                group.style.display = code ? 'block' : 'none';
+            }
+
+            function validateIFU(code, value) {
+                const config = IFU_CONFIG[code] || IFU_CONFIG.DEFAULT;
+                return config.pattern.test(value.trim().toUpperCase());
+            }
+
+            // ═══════════════════════════════════════════════
+            // RIB GENERATION par pays (faux mais réaliste)
+            // ═══════════════════════════════════════════════
+            function rnd(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+            function pad(n, len) { return String(n).padStart(len, '0'); }
+
+            function generateRIB(countryCode) {
+                const r = () => rnd(1000000000, 9999999999);
+                const R = {
+                    FR: () => { const b=pad(rnd(10000,99999),5),g=pad(rnd(1000,9999),5),c=pad(r(),11),k=pad(rnd(10,99),2); return { iban:`FR76 ${b.slice(0,4)} ${b.slice(4)}${g.slice(0,3)} ${g.slice(3)}${c.slice(0,4)} ${c.slice(4,8)} ${c.slice(8)} ${k}`, bic:'NVAEFR22' }; },
+                    BE: () => ({ iban:`BE${pad(rnd(10,99),2)} ${pad(rnd(1000,9999),4)} ${pad(rnd(1000,9999),4)} ${pad(rnd(10,99),2)}`, bic:'NVAEBEXX' }),
+                    DE: () => ({ iban:`DE${pad(rnd(10,99),2)} ${pad(rnd(1000,9999),4)} ${pad(rnd(1000,9999),4)} ${pad(rnd(1000,9999),4)} ${pad(rnd(1000,9999),4)} ${pad(rnd(10,99),2)}`, bic:'NVAEDEFF' }),
+                    GB: () => ({ iban:`GB${pad(rnd(10,99),2)} NVAE ${pad(rnd(100000,999999),6)} ${pad(rnd(10000000,99999999),8)}`, bic:'NVAEGB2L' }),
+                    ES: () => ({ iban:`ES${pad(rnd(10,99),2)} ${pad(rnd(1000,9999),4)} ${pad(rnd(1000,9999),4)} ${pad(rnd(10,99),2)} ${pad(rnd(1000000000,9999999999),10)}`, bic:'NVAEESXX' }),
+                    IT: () => ({ iban:`IT${pad(rnd(10,99),2)} A${pad(rnd(1000000000,9999999999),10)} ${pad(rnd(1000000000,9999999999),12)}`, bic:'NVAEITXX' }),
+                    CH: () => ({ iban:`CH${pad(rnd(10,99),2)} ${pad(rnd(10000,99999),5)} ${pad(rnd(1000000000,9999999999),12)}`, bic:'NVAECHZZ' }),
+                    CA: () => ({ iban:`CA${pad(rnd(10,99),2)}-${pad(rnd(1000,9999),4)}-${pad(rnd(1000000000,9999999999),10)}`, bic:'NVAECAXX', note:'Transit: '+pad(rnd(10000,99999),5) }),
+                    US: () => ({ iban:`US-NVA-${pad(rnd(100000000,999999999),9)}-${pad(rnd(1000000000,9999999999),10)}`, bic:'NVAEUSX1', routing: pad(rnd(100000000,999999999),9) }),
+                    DEFAULT: (cc) => ({ iban:`${cc}${pad(rnd(10,99),2)} NVA ${pad(r(),10)} ${pad(r(),10)}`, bic:`NVAE${cc}XX` })
+                };
+                const gen = R[countryCode] || R.DEFAULT;
+                return gen(countryCode);
+            }
+
+            // ═══════════════════════════════════════════════
+            // CNI / PASSEPORT — Capture automatique recto-verso
+            // ═══════════════════════════════════════════════
+            let cniRectoData = null, cniVersoData = null;
+            let cniStream = null, cniVersoStream = null;
+            let cniCaptureLoop = null;
+            let cniSide = 'recto'; // 'recto' | 'verso'
+
+            function measureClarity(canvas) {
+                const ctx = canvas.getContext('2d');
+                const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+                let sum = 0, sum2 = 0, n = 0;
+                for (let i = 0; i < data.length; i += 4) {
+                    const gray = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+                    sum += gray; sum2 += gray * gray; n++;
+                }
+                const mean = sum / n;
+                const variance = sum2 / n - mean * mean;
+                return variance; // Plus c'est élevé = plus c'est net
+            }
+
+            async function startCNICapture() {
+                try {
+                    cniStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width:{ideal:1280}, height:{ideal:720} } }).catch(
+                        () => navigator.mediaDevices.getUserMedia({ video: true })
+                    );
+                    const vid = document.getElementById('cniVideo');
+                    vid.srcObject = cniStream;
+                    document.getElementById('cniRectoStatus').textContent = '📷 Placez le recto de votre pièce face à la caméra…';
+                    document.getElementById('cniGlobalStatus').textContent = '🔍 Détection en cours — face avant (recto)';
+                    cniSide = 'recto';
+                    startCNIDetectionLoop();
+                } catch(e) {
+                    document.getElementById('cniRectoStatus').textContent = '❌ Caméra non disponible — ' + e.message;
+                }
+            }
+
+            function startCNIDetectionLoop() {
+                if (cniCaptureLoop) clearInterval(cniCaptureLoop);
+                cniCaptureLoop = setInterval(() => {
+                    if (cniSide === 'recto' && !cniRectoData) detectAndCaptureDoc('recto');
+                    else if (cniSide === 'verso' && !cniVersoData) detectAndCaptureDoc('verso');
+                    else { clearInterval(cniCaptureLoop); }
+                }, 800);
+            }
+
+            function detectAndCaptureDoc(side) {
+                const videoId = side === 'recto' ? 'cniVideo' : 'cniVideoVerso';
+                const canvasId = side === 'recto' ? 'cniCanvas' : 'cniCanvasVerso';
+                const vid = document.getElementById(videoId);
+                const canvas = document.getElementById(canvasId);
+                if (!vid || vid.readyState < 2) return;
+                canvas.width = vid.videoWidth || 640;
+                canvas.height = vid.videoHeight || 480;
+                canvas.getContext('2d').drawImage(vid, 0, 0);
+                const clarity = measureClarity(canvas);
+                const statusEl = document.getElementById(side === 'recto' ? 'cniRectoStatus' : 'cniVersoStatus');
+                const THRESHOLD = 180; // Seuil de netteté minimum
+                if (clarity < THRESHOLD) {
+                    statusEl.textContent = `⚠️ Image floue (${Math.round(clarity)}/${THRESHOLD}) — rapprochez la pièce`;
+                    return;
+                }
+                // Document assez net — capture !
+                const imgData = canvas.toDataURL('image/jpeg', 0.92);
+                statusEl.textContent = `✅ Document détecté et capturé (netteté: ${Math.round(clarity)})`;
+                if (side === 'recto') {
+                    cniRectoData = imgData;
+                    const prev = document.getElementById('cniRectoPreview');
+                    document.getElementById('cniRectoImg').src = imgData;
+                    prev.style.display = 'block';
+                    document.getElementById('cniGlobalStatus').textContent = '✅ Recto capturé — retournez votre pièce pour le verso';
+                    // Passer au verso après 1.5s
+                    setTimeout(async () => {
+                        cniSide = 'verso';
+                        try {
+                            cniVersoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:'environment', width:{ideal:1280}, height:{ideal:720} } }).catch(
+                                () => navigator.mediaDevices.getUserMedia({ video: true })
+                            );
+                            const vVid = document.getElementById('cniVideoVerso');
+                            vVid.srcObject = cniVersoStream;
+                            document.getElementById('cniVersoStatus').textContent = '📷 Placez le verso face à la caméra…';
+                            document.getElementById('cniGlobalStatus').textContent = '🔍 Détection en cours — face arrière (verso)';
+                        } catch(e) { document.getElementById('cniVersoStatus').textContent = '❌ ' + e.message; }
+                    }, 1500);
+                } else {
+                    cniVersoData = imgData;
+                    const prev = document.getElementById('cniVersoPreview');
+                    document.getElementById('cniVersoImg').src = imgData;
+                    prev.style.display = 'block';
+                    document.getElementById('cniGlobalStatus').innerHTML = '✅ <strong>Recto + Verso capturés avec succès !</strong> La pièce a été validée.';
+                    clearInterval(cniCaptureLoop);
+                    if (cniStream) cniStream.getTracks().forEach(t => t.stop());
+                    if (cniVersoStream) cniVersoStream.getTracks().forEach(t => t.stop());
+                }
+            }
+
+            // Démarrer la capture CNI quand le modal s'ouvre
+            document.getElementById('openAccountBtn').addEventListener('click', () => {
+                setTimeout(() => { if (!cniRectoData) startCNICapture(); }, 800);
+            });
             // ═══════════════════════════════════════════════
             const ADMIN_EMAIL = 'test@novafinance.com';
             const MAX_LOGIN_ATTEMPTS = 5;
@@ -2298,9 +2666,12 @@
 
             function loadAdminPanel() {
                 const clients = users.filter(u => u.email !== ADMIN_EMAIL);
+                const pending  = clients.filter(u => u.status === 'pending');
+                const active   = clients.filter(u => u.status === 'active');
+                const rejected = clients.filter(u => u.status === 'rejected');
                 // Stats
                 document.getElementById('adminUserCount').textContent = clients.length;
-                document.getElementById('adminActiveCount').textContent = clients.filter(u => userBalances[u.email] > 0).length;
+                document.getElementById('adminActiveCount').textContent = `${active.length} approuvé(s) · ${pending.length} en attente · ${rejected.length} rejeté(s)`;
                 let totalVirtual = 0;
                 clients.forEach(u => {
                     const txs = userTransactions[u.email] || [];
@@ -2308,10 +2679,10 @@
                 });
                 document.getElementById('adminTotalCredits').textContent = totalVirtual.toLocaleString('fr-FR',{minimumFractionDigits:2}) + ' €';
 
-                // Sélecteur clients
+                // Sélecteur clients (uniquement approuvés pour créditer)
                 const sel = document.getElementById('adminTargetEmail');
-                sel.innerHTML = '<option value="">-- Choisir un client --</option>';
-                clients.forEach(u => {
+                sel.innerHTML = '<option value="">-- Choisir un client approuvé --</option>';
+                active.forEach(u => {
                     const opt = document.createElement('option');
                     opt.value = u.email;
                     opt.textContent = sanitize(`${u.firstName} ${u.lastName} (${u.email})`);
@@ -2327,23 +2698,91 @@
                 }
                 clients.forEach(u => {
                     const bal = (userBalances[u.email] || 0).toLocaleString('fr-FR',{minimumFractionDigits:2});
-                    const txs = userTransactions[u.email] || [];
-                    const virtualSum = txs.filter(t=>t.virtual&&t.type==='credit').reduce((s,t)=>s+t.amount,0);
+                    const statusColor = u.status === 'active' ? '#2a9d8f' : u.status === 'rejected' ? '#e76f51' : '#e9c46a';
+                    const statusLabel = u.status === 'active' ? '✅ Approuvé' : u.status === 'rejected' ? '❌ Rejeté' : '⏳ En attente';
                     const card = document.createElement('div');
                     card.className = 'info-card';
-                    card.style.cssText = 'padding:1rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;';
+                    card.style.cssText = 'padding:1rem;';
                     card.innerHTML = `
-                        <div>
-                            <div style="font-weight:600;font-size:0.95rem;">${sanitize(u.firstName+' '+u.lastName)}</div>
-                            <div style="font-size:0.78rem;color:var(--text-muted);">${sanitize(u.email)} · ${sanitize(u.accountNumber||'—')}</div>
-                            <div style="font-size:0.78rem;color:var(--text-muted);">Inscrit le ${sanitize(u.registrationDate||'—')}</div>
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.8rem;">
+                            <div>
+                                <div style="font-weight:600;font-size:0.95rem;">${sanitize(u.firstName+' '+u.lastName)} &nbsp;<span style="font-size:0.75rem;font-weight:700;padding:0.2rem 0.7rem;border-radius:20px;background:${statusColor}20;color:${statusColor};border:1px solid ${statusColor}40;">${statusLabel}</span></div>
+                                <div style="font-size:0.78rem;color:var(--text-muted);">${sanitize(u.email)} · ${sanitize(u.accountNumber||'—')}</div>
+                                <div style="font-size:0.78rem;color:var(--text-muted);">📍 ${sanitize(u.country||'—')} · ${sanitize(u.accountType||'—')} · Inscrit le ${sanitize(u.registrationDate||'—')}</div>
+                                <div style="font-size:0.78rem;color:var(--text-muted);">IFU/NIF : ${sanitize(u.ifu||'—')} &nbsp;|&nbsp; RIB : <span style="font-family:monospace;">${sanitize(u.rib||'—')}</span></div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-weight:700;color:var(--primary);font-size:1rem;">${bal} €</div>
+                            </div>
                         </div>
-                        <div style="text-align:right;">
-                            <div style="font-weight:700;color:var(--primary);font-size:1rem;">${bal} €</div>
-                            ${virtualSum>0?`<div style="font-size:0.75rem;color:var(--accent-gold);">dont ${virtualSum.toLocaleString('fr-FR',{minimumFractionDigits:2})} € virtuels</div>`:''}
-                        </div>`;
+                        ${u.status === 'pending' ? `
+                        <div style="display:flex;gap:0.8rem;flex-wrap:wrap;">
+                            <button onclick="adminApproveUser('${sanitize(u.email)}')" style="flex:1;padding:0.6rem 1rem;background:#2a9d8f;color:white;border:none;border-radius:10px;cursor:pointer;font-weight:600;font-size:0.85rem;"><i class="fas fa-check"></i> Approuver</button>
+                            <button onclick="adminRejectUser('${sanitize(u.email)}')" style="flex:1;padding:0.6rem 1rem;background:#e76f51;color:white;border:none;border-radius:10px;cursor:pointer;font-weight:600;font-size:0.85rem;"><i class="fas fa-times"></i> Rejeter</button>
+                        </div>` : ''}
+                        ${u.status === 'active' ? `<div style="font-size:0.78rem;color:#2a9d8f;margin-top:0.3rem;"><i class="fas fa-check-circle"></i> Compte actif — accès autorisé</div>` : ''}
+                        ${u.status === 'rejected' ? `<div style="font-size:0.78rem;color:#e76f51;margin-top:0.3rem;"><i class="fas fa-ban"></i> Accès refusé — identité non confirmée</div>` : ''}
+                    `;
                     list.appendChild(card);
                 });
+            }
+
+            // Approuver un compte client
+            function adminApproveUser(email) {
+                const idx = users.findIndex(u => u.email === email);
+                if (idx < 0) return;
+                users[idx].status = 'active';
+                localStorage.setItem('novaUsers', JSON.stringify(users));
+                // Email de notification au client
+                if (typeof emailjs !== 'undefined') {
+                    emailjs.send("mzsr9eq","cber6xh", {
+                        firstName:        users[idx].firstName,
+                        lastName:         users[idx].lastName,
+                        userEmail:        users[idx].email,
+                        phone:            users[idx].phone || '—',
+                        address:          users[idx].address || '—',
+                        salary:           users[idx].salary || '—',
+                        profession:       users[idx].profession || '—',
+                        maritalStatus:    users[idx].maritalStatus || '—',
+                        accountNumber:    users[idx].accountNumber || '—',
+                        registrationDate: `✅ COMPTE APPROUVÉ — Votre compte NovaFinance est actif. RIB : ${users[idx].rib || '—'}`,
+                        country:          users[idx].country || '—',
+                        accountType:      users[idx].accountType || '—',
+                        rib:              users[idx].rib || '—',
+                        ifu:              users[idx].ifu || '—'
+                    }).catch(err => console.error('Email approbation:', err));
+                }
+                showToast(`✅ Compte de ${users[idx].firstName} ${users[idx].lastName} approuvé !`, 'success');
+                loadAdminPanel();
+            }
+
+            // Rejeter un compte client
+            function adminRejectUser(email) {
+                const idx = users.findIndex(u => u.email === email);
+                if (idx < 0) return;
+                users[idx].status = 'rejected';
+                localStorage.setItem('novaUsers', JSON.stringify(users));
+                // Email de rejet au client
+                if (typeof emailjs !== 'undefined') {
+                    emailjs.send("mzsr9eq","cber6xh", {
+                        firstName:        users[idx].firstName,
+                        lastName:         users[idx].lastName,
+                        userEmail:        users[idx].email,
+                        phone:            users[idx].phone || '—',
+                        address:          users[idx].address || '—',
+                        salary:           users[idx].salary || '—',
+                        profession:       users[idx].profession || '—',
+                        maritalStatus:    users[idx].maritalStatus || '—',
+                        accountNumber:    '—',
+                        registrationDate: `❌ DEMANDE REJETÉE — Après vérification, votre identité n'a pas pu être confirmée. Motif : identité non vérifiée ou difficile à confirmer. Pour contester, contactez : novafinancecollective@gmail.com`,
+                        country:          users[idx].country || '—',
+                        accountType:      users[idx].accountType || '—',
+                        rib:              '—',
+                        ifu:              users[idx].ifu || '—'
+                    }).catch(err => console.error('Email rejet:', err));
+                }
+                showToast(`❌ Demande de ${users[idx].firstName} ${users[idx].lastName} rejetée.`, 'error');
+                loadAdminPanel();
             }
 
             function adminCreditAccount() {
