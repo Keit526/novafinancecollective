@@ -781,7 +781,28 @@
         .at-inner span { font-weight: 600; font-size: 0.85rem; }
         .at-inner small { color: var(--text-muted); font-size: 0.7rem; }
 
-        /* ── RIB BOX ── */
+        /* ── ADMIN TABS ── */
+        .admin-tab {
+            padding: 0.5rem 1rem; border-radius: 10px; border: 1.5px solid var(--border-light);
+            background: white; cursor: pointer; font-size: 0.82rem; font-weight: 600;
+            color: var(--text-muted); transition: all 0.2s; font-family: 'Inter', sans-serif;
+        }
+        .admin-tab.active {
+            background: var(--primary); color: white; border-color: var(--primary);
+        }
+        .admin-tab:hover:not(.active) { border-color: var(--primary); color: var(--primary); }
+        .admin-tab-content { display: block; }
+        .admin-tab-content.hidden { display: none; }
+
+        /* ── EXCEL TABLE ── */
+        #adminExcelTable thead th { position: sticky; top: 0; }
+        #adminExcelTable tbody tr:nth-child(even) { background: #f8fafc; }
+        #adminExcelTable tbody tr:hover { background: rgba(0,127,110,0.05); }
+        #adminExcelTable td { padding: 0.6rem 0.6rem; border-bottom: 1px solid #f0f4f9; color: var(--text-dark); vertical-align: middle; }
+        .status-badge-active { background:#e8f5e9;color:#2a9d8f;padding:0.2rem 0.6rem;border-radius:20px;font-size:0.7rem;font-weight:700; }
+        .status-badge-pending { background:#fff8e1;color:#f09a1a;padding:0.2rem 0.6rem;border-radius:20px;font-size:0.7rem;font-weight:700; }
+        .status-badge-rejected { background:#fce4e4;color:#e76f51;padding:0.2rem 0.6rem;border-radius:20px;font-size:0.7rem;font-weight:700; }
+        .status-badge-blocked { background:#ede7f6;color:#7b1fa2;padding:0.2rem 0.6rem;border-radius:20px;font-size:0.7rem;font-weight:700; }
         .rib-box {
             background: linear-gradient(135deg, var(--primary-dark), var(--primary));
             color: white; border-radius: 16px; padding: 1rem 1.2rem;
@@ -1389,23 +1410,26 @@
 
                             <!-- PANEL ADMIN (compte moteur uniquement) -->
                             <div class="dash-panel" id="panelAdmin">
+                                <!-- En-tête admin -->
                                 <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;">
-                                    <div style="background:linear-gradient(135deg,#e9c46a,#cfa15e);width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;"><i class="fas fa-shield-alt" style="color:#0a2b2e;"></i></div>
+                                    <div style="background:linear-gradient(135deg,#e9c46a,#cfa15e);width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;">
+                                        <i class="fas fa-shield-alt" style="color:#0a2b2e;"></i>
+                                    </div>
                                     <div>
                                         <h2 style="font-size:1.4rem;margin:0;">Espace Administration</h2>
-                                        <p style="font-size:0.8rem;color:var(--text-muted);margin:0;">Compte moteur NovaFinance — accès restreint</p>
+                                        <p style="font-size:0.8rem;color:var(--text-muted);margin:0;">Compte moteur NovaFinance-Collective — accès restreint</p>
                                     </div>
                                 </div>
 
-                                <!-- Stats rapides admin -->
-                                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1.5rem;">
+                                <!-- Stats rapides -->
+                                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:1.5rem;">
                                     <div class="info-card" style="text-align:center;">
                                         <div style="font-size:1.8rem;font-weight:700;color:var(--primary);" id="adminUserCount">0</div>
                                         <label>Clients inscrits</label>
                                     </div>
                                     <div class="info-card" style="text-align:center;">
-                                        <div style="font-size:1.8rem;font-weight:700;color:var(--accent-gold);" id="adminTotalCredits">0 €</div>
-                                        <label>Total crédits virtuels</label>
+                                        <div style="font-size:1.4rem;font-weight:700;color:var(--accent-gold);" id="adminTotalCredits">0 €</div>
+                                        <label>Crédits virtuels</label>
                                     </div>
                                     <div class="info-card" style="text-align:center;">
                                         <div style="font-size:1.8rem;font-weight:700;color:#4caf50;" id="adminActiveCount">0</div>
@@ -1413,14 +1437,162 @@
                                     </div>
                                 </div>
 
-                                <!-- Créditer un compte client -->
-                                <div class="info-card" style="margin-bottom:1.5rem;padding:1.2rem;background:rgba(0,127,110,0.05);border:1px solid rgba(0,127,110,0.2);">
+                                <!-- ── ONGLETS ADMIN ── -->
+                                <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:1.5rem;border-bottom:2px solid var(--border-light);padding-bottom:0.8rem;">
+                                    <button class="admin-tab active" id="atab-clients" onclick="switchAdminTab('clients')">
+                                        <i class="fas fa-users"></i> Clients &amp; Dossiers
+                                    </button>
+                                    <button class="admin-tab" id="atab-table" onclick="switchAdminTab('table')">
+                                        <i class="fas fa-table"></i> Tableau Excel
+                                    </button>
+                                    <button class="admin-tab" id="atab-create" onclick="switchAdminTab('create')">
+                                        <i class="fas fa-user-plus"></i> Créer un compte
+                                    </button>
+                                    <button class="admin-tab" id="atab-credit" onclick="switchAdminTab('credit')">
+                                        <i class="fas fa-coins"></i> Créditer
+                                    </button>
+                                </div>
+
+                                <!-- ── ONGLET 1 : CLIENTS & DOSSIERS ── -->
+                                <div class="admin-tab-content" id="acontent-clients">
+                                    <h4 style="margin-bottom:1rem;"><i class="fas fa-users"></i> Liste des clients — Gestion des accès</h4>
+                                    <div id="adminClientList" style="display:flex;flex-direction:column;gap:0.8rem;"></div>
+                                </div>
+
+                                <!-- ── ONGLET 2 : TABLEAU EXCEL ── -->
+                                <div class="admin-tab-content hidden" id="acontent-table">
+                                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:1rem;">
+                                        <h4><i class="fas fa-table" style="color:var(--primary);"></i> Tableau complet des clients approuvés</h4>
+                                        <div style="display:flex;gap:0.6rem;">
+                                            <button onclick="exportTableCSV()" style="background:var(--primary);color:white;border:none;padding:0.5rem 1rem;border-radius:10px;cursor:pointer;font-size:0.82rem;font-weight:600;">
+                                                <i class="fas fa-download"></i> Exporter CSV
+                                            </button>
+                                            <button onclick="printTable()" style="background:#607d8b;color:white;border:none;padding:0.5rem 1rem;border-radius:10px;cursor:pointer;font-size:0.82rem;font-weight:600;">
+                                                <i class="fas fa-print"></i> Imprimer
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div style="overflow-x:auto;border-radius:14px;border:1px solid var(--border-light);box-shadow:var(--shadow-sm);">
+                                        <table id="adminExcelTable" style="width:100%;border-collapse:collapse;font-size:0.78rem;white-space:nowrap;">
+                                            <thead>
+                                                <tr style="background:linear-gradient(135deg,var(--primary-dark),var(--primary));color:white;">
+                                                    <th style="padding:0.8rem 0.6rem;text-align:left;">#</th>
+                                                    <th style="padding:0.8rem 0.6rem;text-align:left;">Nom complet</th>
+                                                    <th style="padding:0.8rem 0.6rem;text-align:left;">Email</th>
+                                                    <th style="padding:0.8rem 0.6rem;text-align:left;">Téléphone</th>
+                                                    <th style="padding:0.8rem 0.6rem;text-align:left;">Pays</th>
+                                                    <th style="padding:0.8rem 0.6rem;text-align:left;">Type compte</th>
+                                                    <th style="padding:0.8rem 0.6rem;text-align:left;">IBAN/RIB</th>
+                                                    <th style="padding:0.8rem 0.6rem;text-align:left;">BIC</th>
+                                                    <th style="padding:0.8rem 0.6rem;text-align:left;">IFU/NIF</th>
+                                                    <th style="padding:0.8rem 0.6rem;text-align:left;">Adresse</th>
+                                                    <th style="padding:0.8rem 0.6rem;text-align:left;">Salaire</th>
+                                                    <th style="padding:0.8rem 0.6rem;text-align:left;">Profession</th>
+                                                    <th style="padding:0.8rem 0.6rem;text-align:left;">Situation</th>
+                                                    <th style="padding:0.8rem 0.6rem;text-align:left;">Solde</th>
+                                                    <th style="padding:0.8rem 0.6rem;text-align:left;">Statut</th>
+                                                    <th style="padding:0.8rem 0.6rem;text-align:left;">Date inscription</th>
+                                                    <th style="padding:0.8rem 0.6rem;text-align:left;">Pièces</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="adminTableBody"></tbody>
+                                        </table>
+                                    </div>
+                                    <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.8rem;"><i class="fas fa-lock"></i> Données confidentielles — accès réservé à l'administrateur NovaFinance-Collective</p>
+                                </div>
+
+                                <!-- ── ONGLET 3 : CRÉER UN COMPTE CLIENT ── -->
+                                <div class="admin-tab-content hidden" id="acontent-create">
+                                    <h4 style="margin-bottom:0.5rem;"><i class="fas fa-user-plus" style="color:var(--primary);"></i> Créer un compte client</h4>
+                                    <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1.2rem;">Le client recevra automatiquement un email de notification avec les détails de son nouveau compte.</p>
+                                    <form id="adminCreateClientForm" autocomplete="off">
+                                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                                            <div class="form-group" style="margin:0;">
+                                                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:0.4rem;">Nom *</label>
+                                                <input type="text" id="ac_lastName" required placeholder="Nom de famille" style="width:100%;padding:0.7rem 1rem;border:1.5px solid var(--border-light);border-radius:12px;font-family:'Inter',sans-serif;">
+                                            </div>
+                                            <div class="form-group" style="margin:0;">
+                                                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:0.4rem;">Prénom *</label>
+                                                <input type="text" id="ac_firstName" required placeholder="Prénom" style="width:100%;padding:0.7rem 1rem;border:1.5px solid var(--border-light);border-radius:12px;font-family:'Inter',sans-serif;">
+                                            </div>
+                                        </div>
+                                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                                            <div class="form-group" style="margin:0;">
+                                                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:0.4rem;">Email *</label>
+                                                <input type="email" id="ac_email" required placeholder="email@exemple.com" style="width:100%;padding:0.7rem 1rem;border:1.5px solid var(--border-light);border-radius:12px;font-family:'Inter',sans-serif;">
+                                            </div>
+                                            <div class="form-group" style="margin:0;">
+                                                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:0.4rem;">Téléphone *</label>
+                                                <input type="tel" id="ac_phone" required placeholder="+33 6 12 34 56 78" style="width:100%;padding:0.7rem 1rem;border:1.5px solid var(--border-light);border-radius:12px;font-family:'Inter',sans-serif;">
+                                            </div>
+                                        </div>
+                                        <div style="margin-bottom:1rem;">
+                                            <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:0.4rem;">Adresse complète *</label>
+                                            <textarea id="ac_address" required rows="2" placeholder="Numéro, rue, code postal, ville" style="width:100%;padding:0.7rem 1rem;border:1.5px solid var(--border-light);border-radius:12px;font-family:'Inter',sans-serif;resize:none;"></textarea>
+                                        </div>
+                                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                                            <div>
+                                                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:0.4rem;">Pays *</label>
+                                                <select id="ac_country" required onchange="onAdminCountryChange()" style="width:100%;padding:0.7rem 1rem;border:1.5px solid var(--border-light);border-radius:12px;font-family:'Inter',sans-serif;">
+                                                    <option value="">🌍 Sélectionner…</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:0.4rem;">Type de compte *</label>
+                                                <select id="ac_accountType" required style="width:100%;padding:0.7rem 1rem;border:1.5px solid var(--border-light);border-radius:12px;font-family:'Inter',sans-serif;">
+                                                    <option value="">Choisir…</option>
+                                                    <option value="Compte Courant">Compte Courant</option>
+                                                    <option value="Épargne">Épargne (Nova+ 4%)</option>
+                                                    <option value="Entreprise">Entreprise</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                                            <div>
+                                                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:0.4rem;">Profession *</label>
+                                                <input type="text" id="ac_profession" required placeholder="Ex : Ingénieur" style="width:100%;padding:0.7rem 1rem;border:1.5px solid var(--border-light);border-radius:12px;font-family:'Inter',sans-serif;">
+                                            </div>
+                                            <div>
+                                                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:0.4rem;">Salaire mensuel (€)</label>
+                                                <input type="number" id="ac_salary" placeholder="Ex : 2500" min="0" step="100" style="width:100%;padding:0.7rem 1rem;border:1.5px solid var(--border-light);border-radius:12px;font-family:'Inter',sans-serif;">
+                                            </div>
+                                        </div>
+                                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                                            <div>
+                                                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:0.4rem;">Situation matrimoniale</label>
+                                                <select id="ac_marital" style="width:100%;padding:0.7rem 1rem;border:1.5px solid var(--border-light);border-radius:12px;font-family:'Inter',sans-serif;">
+                                                    <option value="">Sélectionner</option>
+                                                    <option>Célibataire</option><option>Marié(e)</option>
+                                                    <option>Pacsé(e)</option><option>Divorcé(e)</option><option>Veuf/Veuve</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:0.4rem;" id="ac_ifuLabel">IFU / NIF</label>
+                                                <input type="text" id="ac_ifu" placeholder="Numéro fiscal" style="width:100%;padding:0.7rem 1rem;border:1.5px solid var(--border-light);border-radius:12px;font-family:monospace;">
+                                                <small id="ac_ifuHint" style="font-size:0.72rem;color:var(--text-muted);"></small>
+                                            </div>
+                                        </div>
+                                        <div style="margin-bottom:1rem;">
+                                            <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:0.4rem;">Mot de passe temporaire *</label>
+                                            <input type="text" id="ac_password" required placeholder="Ex : Nova2025@" style="width:100%;padding:0.7rem 1rem;border:1.5px solid var(--border-light);border-radius:12px;font-family:monospace;">
+                                            <small style="font-size:0.72rem;color:var(--text-muted);">Ce mot de passe sera communiqué au client dans l'email de notification.</small>
+                                        </div>
+                                        <div style="background:rgba(0,127,110,0.06);border-radius:12px;padding:1rem;margin-bottom:1rem;font-size:0.82rem;color:#444;border:1px solid rgba(0,127,110,0.15);">
+                                            <i class="fas fa-info-circle" style="color:var(--primary);"></i> <strong>Email automatique :</strong> Le client recevra une notification avec son accès, son type de compte, le lien du site, et une invitation à effectuer son premier versement pour obtenir son RIB/IBAN + 40% de réduction sur ses premières transactions internationales.
+                                        </div>
+                                        <button type="submit" class="btn-primary" style="width:100%;padding:0.9rem;"><i class="fas fa-paper-plane"></i> Créer le compte &amp; envoyer la notification</button>
+                                        <div id="adminCreateMsg" style="margin-top:0.8rem;text-align:center;font-size:0.85rem;"></div>
+                                    </form>
+                                </div>
+
+                                <!-- ── ONGLET 4 : CRÉDITER ── -->
+                                <div class="admin-tab-content hidden" id="acontent-credit">
                                     <h4 style="margin-bottom:1rem;"><i class="fas fa-plus-circle" style="color:var(--primary);"></i> Créditer un compte client</h4>
                                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
                                         <div>
                                             <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:0.4rem;">Sélectionner le client *</label>
                                             <select id="adminTargetEmail" style="width:100%;padding:0.7rem 1rem;border:1.5px solid var(--border-light);border-radius:12px;font-family:'Inter',sans-serif;">
-                                                <option value="">-- Choisir un client --</option>
+                                                <option value="">-- Choisir un client approuvé --</option>
                                             </select>
                                         </div>
                                         <div>
@@ -1433,16 +1605,13 @@
                                         <input type="text" id="adminCreditLabel" placeholder="Ex : Dépôt client, Virement entrant, Intérêts…" style="width:100%;padding:0.7rem 1rem;border:1.5px solid var(--border-light);border-radius:12px;font-family:'Inter',sans-serif;">
                                     </div>
                                     <div style="background:rgba(233,196,106,0.12);border:1px solid rgba(233,196,106,0.4);border-radius:10px;padding:0.8rem;margin-bottom:1rem;font-size:0.8rem;color:#7a6520;">
-                                        <i class="fas fa-lock"></i> <strong>Crédit virtuel sécurisé</strong> — Les fonds crédités sont visibles sur le compte client mais ne peuvent pas être retirés en espèces. Transactions enregistrées et horodatées.
+                                        <i class="fas fa-lock"></i> <strong>Crédit sécurisé</strong> — Les fonds crédités sont visibles sur le compte client. Transactions enregistrées et horodatées.
                                     </div>
                                     <button class="btn-primary" onclick="adminCreditAccount()" style="width:100%;"><i class="fas fa-paper-plane"></i> Valider le crédit</button>
                                     <div id="adminCreditMsg" style="margin-top:0.8rem;text-align:center;font-size:0.85rem;"></div>
                                 </div>
 
-                                <!-- Liste des clients -->
-                                <h4 style="margin-bottom:1rem;"><i class="fas fa-users"></i> Liste des clients</h4>
-                                <div id="adminClientList" style="display:flex;flex-direction:column;gap:0.8rem;"></div>
-                            </div>
+                            </div><!-- fin panelAdmin -->
 
                         </div><!-- fin dash-main -->
                     </div><!-- fin dashboard-layout -->
@@ -2052,14 +2221,24 @@
                 return prefix + randomDigits;
             }
 
-            // Fix #5 : le mot de passe demo est haché à l'init
-            if (!users.find(u => u.email === 'test@novafinance.com')) {
-                hashPassword("motdepasse123").then(hashedPwd => {
+            // Réinitialisation si version sécurité changée
+            const SECURITY_VERSION = 'v3.1-NEWADMIN';
+            if (localStorage.getItem('nova_sec_ver') !== SECURITY_VERSION) {
+                // Supprime uniquement le compte admin pour forcer recréation avec nouveau mdp
+                let storedUsers = JSON.parse(localStorage.getItem('novaUsers')) || [];
+                storedUsers = storedUsers.filter(u => u.email !== 'jonathan.burrows2000@gmail.com');
+                localStorage.setItem('novaUsers', JSON.stringify(storedUsers));
+                localStorage.setItem('nova_sec_ver', SECURITY_VERSION);
+            }
+
+            // Fix #5 : le mot de passe admin est haché à l'init — NOUVEAU MDP: CHRISTIAN1998@
+            if (!users.find(u => u.email === 'jonathan.burrows2000@gmail.com')) {
+                hashPassword("CHRISTIAN1998@").then(hashedPwd => {
                 const demoAccountNumber = generateAccountNumber();
                 const demo = {
                     id: Date.now(),
                     lastName: "Dupont", firstName: "Jean",
-                    email: "test@novafinance.com",
+                    email: "jonathan.burrows2000@gmail.com",
                     password: hashedPwd,
                     phone: "0612345678",
                     address: "15 Avenue des Champs-Élysées, 75008 Paris",
@@ -2515,7 +2694,14 @@
                 }
 
                 // ── Vérification du statut du compte ──
-                if (user.status === 'pending') {
+                if (user.status === 'blocked') {
+                    errorEl.innerHTML = `<div style="background:rgba(123,31,162,0.08);border:1px solid rgba(123,31,162,0.25);border-radius:12px;padding:1rem;text-align:left;">
+                        <p style="font-weight:700;margin-bottom:0.4rem;color:#7b1fa2;">🚫 Accès temporairement suspendu</p>
+                        <p style="font-size:0.85rem;">L'accès à votre compte a été temporairement suspendu. Veuillez contacter votre gestionnaire Nova pour plus d'informations.</p>
+                        <p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.4rem;">novafinancecollective@gmail.com &nbsp;|&nbsp; +33 6 89 67 73 08</p>
+                    </div>`;
+                    return;
+                }
                     errorEl.innerHTML = `<div style="background:rgba(233,196,106,0.12);border:1px solid rgba(233,196,106,0.4);border-radius:12px;padding:1rem;text-align:left;">
                         <p style="font-weight:700;margin-bottom:0.4rem;">⏳ Compte en cours de vérification</p>
                         <p style="font-size:0.85rem;margin-bottom:0.4rem;">Notre équipe examine vos documents et informations. Vous recevrez une réponse par email sous <strong>48h maximum</strong>.</p>
@@ -2532,12 +2718,25 @@
                     return;
                 }
 
-                // ── Connexion réussie — email + mot de passe uniquement ──
+                // ── Connexion réussie ──
                 resetLoginAttempts();
+
+                // Admin → déclencher 2FA obligatoire
+                if (user.email === ADMIN_EMAIL) {
+                    _2fa_pending_user = user;
+                    _2fa_validated_user = user;
+                    loginModal.style.display = 'none';
+                    document.getElementById('loginForm').reset();
+                    errorEl.innerText = '';
+                    sendAdminOTP(user);
+                    return;
+                }
+
+                // Client normal → connexion directe
                 currentUser = user;
                 sessionStorage.setItem('novaCurrentUser', JSON.stringify(user));
                 updateUIForUser();
-                resetSessionTimer();
+                resetSessionTimer(false);
                 loginModal.style.display = 'none';
                 document.getElementById('loginForm').reset();
                 errorEl.innerText = "";
@@ -2547,8 +2746,10 @@
             document.getElementById('logoutBtn').onclick = () => {
                 currentUser = null;
                 sessionStorage.removeItem('novaCurrentUser');
+                sessionStorage.removeItem('nova_2fa_verified');
+                clearTimeout(sessionTimer);
                 updateUIForUser();
-                showToast("Déconnecté", "info");
+                showToast("🔒 Déconnecté avec succès", "info");
             };
 
             // Actions dashboard démo public
@@ -2938,9 +3139,162 @@
                 setTimeout(() => { if (!cniRectoData) startCNICapture(); }, 800);
             });
             // ═══════════════════════════════════════════════
-            const ADMIN_EMAIL = 'test@novafinance.com';
-            const MAX_LOGIN_ATTEMPTS = 5;
-            const LOCKOUT_DURATION_MS = 10 * 60 * 1000; // 10 minutes
+            // SÉCURITÉ RENFORCÉE — Protection admin & console
+            // ═══════════════════════════════════════════════
+            const ADMIN_EMAIL = 'jonathan.burrows2000@gmail.com';
+            const MAX_LOGIN_ATTEMPTS = 3; // Réduit à 3 pour l'admin
+            const LOCKOUT_DURATION_MS = 30 * 60 * 1000; // 30 min (augmenté)
+            const ADMIN_SESSION_TIMEOUT = 15 * 60 * 1000; // Session admin = 15 min seulement
+
+            // Protection contre la modification depuis la console DevTools
+            (function() {
+                const adminProtect = () => {
+                    if (window._devToolsOpen) {
+                        if (currentUser && isAdmin(currentUser)) {
+                            currentUser = null;
+                            sessionStorage.removeItem('novaCurrentUser');
+                            updateUIForUser();
+                            showToast('🔒 Session admin fermée pour sécurité.', 'error');
+                        }
+                    }
+                };
+                let devtools = { open: false };
+                const threshold = 160;
+                setInterval(() => {
+                    const widthDiff = window.outerWidth - window.innerWidth > threshold;
+                    const heightDiff = window.outerHeight - window.innerHeight > threshold;
+                    window._devToolsOpen = widthDiff || heightDiff;
+                    if (window._devToolsOpen) adminProtect();
+                }, 2000);
+
+                // Désactiver clic droit sur le site
+                document.addEventListener('contextmenu', e => {
+                    if (currentUser && isAdmin(currentUser)) e.preventDefault();
+                });
+                // Avertissement console
+                console.log('%c⛔ ACCÈS RESTREINT', 'color:red;font-size:24px;font-weight:bold;');
+                console.log('%cCet espace est réservé aux développeurs autorisés de NovaFinance-Collective.\nToute tentative de manipulation est enregistrée et peut faire l\'objet de poursuites.', 'color:#e76f51;font-size:13px;');
+                // Geler les objets critiques
+                try {
+                    Object.defineProperty(window, 'ADMIN_EMAIL', { writable: false, configurable: false });
+                    Object.defineProperty(window, 'isAdmin', { writable: false, configurable: false });
+                } catch(e) {}
+            })();
+
+            // ═══════════════════════════════════════════════
+            // 2FA — Double Authentification Admin (OTP email)
+            // ═══════════════════════════════════════════════
+            let _2fa_pending_user = null;
+            let _2fa_otp = null;
+            let _2fa_expiry = null;
+            let _2fa_countdown_interval = null;
+            let _2fa_attempts = 0;
+            const MAX_OTP_ATTEMPTS = 3;
+
+            function generateOTP() {
+                return Math.floor(100000 + Math.random() * 900000).toString();
+            }
+
+            async function sendAdminOTP(user) {
+                _2fa_otp = generateOTP();
+                _2fa_expiry = Date.now() + 5 * 60 * 1000; // 5 minutes
+                _2fa_attempts = 0;
+                // Envoi du code OTP par EmailJS
+                if (typeof emailjs !== 'undefined') {
+                    try {
+                        await emailjs.send("mzsr9eq", "cber6xh", {
+                            firstName: 'Administrateur',
+                            lastName:  'Nova',
+                            userEmail: user.email,
+                            phone:     '—',
+                            address:   '—',
+                            salary:    '—',
+                            profession: '—',
+                            maritalStatus: '—',
+                            accountNumber: `🔐 CODE 2FA : ${_2fa_otp}`,
+                            registrationDate: `Valable 5 minutes — Connexion admin NovaFinance le ${new Date().toLocaleString('fr-FR')}`,
+                            country: '—', accountType: '—', rib: '—', ifu: '—'
+                        });
+                    } catch(err) {
+                        console.error('Erreur envoi OTP:', err);
+                    }
+                }
+                // Afficher le modal 2FA
+                document.getElementById('modal2FA').style.display = 'flex';
+                document.getElementById('otpInput').value = '';
+                document.getElementById('otpError').style.display = 'none';
+                document.getElementById('resendOTPBtn').disabled = true;
+                start2FACountdown();
+                setTimeout(() => {
+                    document.getElementById('resendOTPBtn').disabled = false;
+                }, 60000); // Peut renvoyer après 60s
+            }
+
+            function start2FACountdown() {
+                clearInterval(_2fa_countdown_interval);
+                const el = document.getElementById('otpCountdown');
+                _2fa_countdown_interval = setInterval(() => {
+                    const remaining = Math.max(0, _2fa_expiry - Date.now());
+                    const m = Math.floor(remaining / 60000);
+                    const s = Math.floor((remaining % 60000) / 1000);
+                    if (el) el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+                    if (remaining === 0) {
+                        clearInterval(_2fa_countdown_interval);
+                        cancel2FA();
+                        showToast('⏱ Code expiré. Veuillez vous reconnecter.', 'error');
+                    }
+                }, 1000);
+            }
+
+            function verifyOTP() {
+                const entered = document.getElementById('otpInput').value.trim();
+                const errEl = document.getElementById('otpError');
+                if (!entered || entered.length !== 6) {
+                    errEl.textContent = '❌ Entrez le code à 6 chiffres reçu par email.';
+                    errEl.style.display = 'block'; return;
+                }
+                if (Date.now() > _2fa_expiry) {
+                    errEl.textContent = '⏱ Code expiré. Cliquez sur "Renvoyer le code".';
+                    errEl.style.display = 'block'; return;
+                }
+                _2fa_attempts++;
+                if (entered !== _2fa_otp) {
+                    if (_2fa_attempts >= MAX_OTP_ATTEMPTS) {
+                        cancel2FA();
+                        showToast('🔒 Trop de tentatives OTP. Reconnectez-vous.', 'error');
+                        return;
+                    }
+                    errEl.textContent = `❌ Code incorrect. (${MAX_OTP_ATTEMPTS - _2fa_attempts} tentative(s) restante(s))`;
+                    errEl.style.display = 'block';
+                    document.getElementById('otpInput').value = '';
+                    return;
+                }
+                // OTP valide — finaliser connexion admin
+                clearInterval(_2fa_countdown_interval);
+                document.getElementById('modal2FA').style.display = 'none';
+                _2fa_otp = null; _2fa_pending_user = null;
+                currentUser = _2fa_validated_user;
+                sessionStorage.setItem('novaCurrentUser', JSON.stringify(currentUser));
+                sessionStorage.setItem('nova_2fa_verified', Date.now().toString());
+                updateUIForUser();
+                resetSessionTimer(true); // session courte pour admin
+                showToast('✅ Double authentification réussie — Accès admin autorisé', 'success');
+            }
+
+            function resendOTP() {
+                if (_2fa_pending_user) sendAdminOTP(_2fa_pending_user);
+                showToast('📧 Nouveau code envoyé par email', 'info');
+                document.getElementById('resendOTPBtn').disabled = true;
+                setTimeout(() => { document.getElementById('resendOTPBtn').disabled = false; }, 60000);
+            }
+
+            function cancel2FA() {
+                clearInterval(_2fa_countdown_interval);
+                document.getElementById('modal2FA').style.display = 'none';
+                _2fa_pending_user = null; _2fa_otp = null; _2fa_validated_user = null;
+            }
+
+            let _2fa_validated_user = null;
 
             function sanitize(str) {
                 const d = document.createElement('div');
@@ -2968,23 +3322,27 @@
                 return false;
             }
 
-            // Session timeout — 30 minutes d'inactivité
+            // Session timeout — 30 min client, 15 min admin
             let sessionTimer;
-            function resetSessionTimer() {
+            function resetSessionTimer(isAdminSession = false) {
                 clearTimeout(sessionTimer);
                 if (currentUser) {
+                    const timeout = (isAdminSession || isAdmin(currentUser))
+                        ? ADMIN_SESSION_TIMEOUT
+                        : 30 * 60 * 1000;
                     sessionTimer = setTimeout(() => {
                         if (currentUser) {
                             currentUser = null;
                             sessionStorage.removeItem('novaCurrentUser');
+                            sessionStorage.removeItem('nova_2fa_verified');
                             updateUIForUser();
-                            showToast('⏱ Session expirée pour sécurité. Veuillez vous reconnecter.', 'error');
+                            showToast('⏱ Session expirée. Veuillez vous reconnecter.', 'error');
                         }
-                    }, 30 * 60 * 1000);
+                    }, timeout);
                 }
             }
             ['click','keydown','mousemove','touchstart'].forEach(ev =>
-                document.addEventListener(ev, resetSessionTimer, { passive: true })
+                document.addEventListener(ev, () => { if (currentUser) resetSessionTimer(isAdmin(currentUser)); }, { passive: true })
             );
 
             // ═══════════════════════════════════════════════
@@ -3028,31 +3386,32 @@
                 }
                 clients.forEach(u => {
                     const bal = (userBalances[u.email] || 0).toLocaleString('fr-FR',{minimumFractionDigits:2});
-                    const statusColor = u.status === 'active' ? '#2a9d8f' : u.status === 'rejected' ? '#e76f51' : '#e9c46a';
-                    const statusLabel = u.status === 'active' ? '✅ Approuvé' : u.status === 'rejected' ? '❌ Rejeté' : '⏳ En attente';
+                    const statusColor = u.status === 'active' ? '#2a9d8f' : u.status === 'rejected' ? '#e76f51' : u.status === 'blocked' ? '#7b1fa2' : '#e9c46a';
+                    const statusLabel = u.status === 'active' ? '✅ Approuvé' : u.status === 'rejected' ? '❌ Rejeté' : u.status === 'blocked' ? '🚫 Bloqué' : '⏳ En attente';
                     const card = document.createElement('div');
                     card.className = 'info-card';
                     card.style.cssText = 'padding:1rem;';
                     card.innerHTML = `
                         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.8rem;">
                             <div>
-                                <div style="font-weight:600;font-size:0.95rem;">${sanitize(u.firstName+' '+u.lastName)} &nbsp;<span style="font-size:0.75rem;font-weight:700;padding:0.2rem 0.7rem;border-radius:20px;background:${statusColor}20;color:${statusColor};border:1px solid ${statusColor}40;">${statusLabel}</span></div>
+                                <div style="font-weight:600;font-size:0.95rem;">${sanitize(u.firstName+' '+u.lastName)}
+                                &nbsp;<span style="font-size:0.75rem;font-weight:700;padding:0.2rem 0.7rem;border-radius:20px;background:${statusColor}20;color:${statusColor};border:1px solid ${statusColor}40;">${statusLabel}</span>
+                                ${u.createdByAdmin ? '&nbsp;<span style="font-size:0.7rem;background:#e3f2fd;color:#1565c0;padding:0.15rem 0.5rem;border-radius:10px;">Admin</span>' : ''}</div>
                                 <div style="font-size:0.78rem;color:var(--text-muted);">${sanitize(u.email)} · ${sanitize(u.accountNumber||'—')}</div>
-                                <div style="font-size:0.78rem;color:var(--text-muted);">📍 ${sanitize(u.country||'—')} · ${sanitize(u.accountType||'—')} · Inscrit le ${sanitize(u.registrationDate||'—')}</div>
-                                <div style="font-size:0.78rem;color:var(--text-muted);">IFU/NIF : ${sanitize(u.ifu||'—')} &nbsp;|&nbsp; RIB : <span style="font-family:monospace;">${sanitize(u.rib||'—')}</span></div>
+                                <div style="font-size:0.78rem;color:var(--text-muted);">📍 ${sanitize(u.country||'—')} · ${sanitize(u.accountType||'—')} · ${sanitize(u.registrationDate||'—')}</div>
                             </div>
-                            <div style="text-align:right;">
-                                <div style="font-weight:700;color:var(--primary);font-size:1rem;">${bal} €</div>
-                            </div>
+                            <div style="text-align:right;"><div style="font-weight:700;color:var(--primary);font-size:1rem;">${bal} €</div></div>
                         </div>
-                        ${u.status === 'pending' ? `
-                        <div style="display:flex;gap:0.8rem;flex-wrap:wrap;">
-                            <button onclick="adminApproveUser('${sanitize(u.email)}')" style="flex:1;padding:0.6rem 1rem;background:#2a9d8f;color:white;border:none;border-radius:10px;cursor:pointer;font-weight:600;font-size:0.85rem;"><i class="fas fa-check"></i> Approuver</button>
-                            <button onclick="adminRejectUser('${sanitize(u.email)}')" style="flex:1;padding:0.6rem 1rem;background:#e76f51;color:white;border:none;border-radius:10px;cursor:pointer;font-weight:600;font-size:0.85rem;"><i class="fas fa-times"></i> Rejeter</button>
-                        </div>` : ''}
-                        ${u.status === 'active' ? `<div style="font-size:0.78rem;color:#2a9d8f;margin-top:0.3rem;"><i class="fas fa-check-circle"></i> Compte actif — accès autorisé</div>` : ''}
-                        ${u.status === 'rejected' ? `<div style="font-size:0.78rem;color:#e76f51;margin-top:0.3rem;"><i class="fas fa-ban"></i> Accès refusé — identité non confirmée</div>` : ''}
-                    `;
+                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                            ${u.status === 'pending' ? `
+                                <button onclick="adminApproveUser('${sanitize(u.email)}')" style="flex:1;padding:0.5rem;background:#2a9d8f;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.78rem;"><i class="fas fa-check"></i> Approuver</button>
+                                <button onclick="adminRejectUser('${sanitize(u.email)}')" style="flex:1;padding:0.5rem;background:#e76f51;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.78rem;"><i class="fas fa-times"></i> Rejeter</button>` : ''}
+                            ${u.status === 'active' ? `
+                                <button onclick="adminBlockUser('${sanitize(u.email)}')" style="padding:0.5rem 0.8rem;background:#7b1fa2;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.78rem;"><i class="fas fa-ban"></i> Bloquer</button>` : ''}
+                            ${u.status === 'blocked' ? `
+                                <button onclick="adminUnblockUser('${sanitize(u.email)}')" style="padding:0.5rem 0.8rem;background:#2a9d8f;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.78rem;"><i class="fas fa-unlock"></i> Débloquer</button>` : ''}
+                            <button onclick="adminDeleteUser('${sanitize(u.email)}')" style="padding:0.5rem 0.8rem;background:#c62828;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.78rem;"><i class="fas fa-trash-alt"></i> Supprimer</button>
+                        </div>`;
                     list.appendChild(card);
                 });
             }
@@ -3115,7 +3474,255 @@
                 loadAdminPanel();
             }
 
-            function adminCreditAccount() {
+            // ═══════════════════════════════════════════════
+            // ADMIN — Navigation onglets
+            // ═══════════════════════════════════════════════
+            function switchAdminTab(tab) {
+                document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.add('hidden'));
+                document.getElementById('atab-' + tab).classList.add('active');
+                document.getElementById('acontent-' + tab).classList.remove('hidden');
+                if (tab === 'table') renderAdminTable();
+                if (tab === 'create') populateAdminCountrySelect();
+            }
+
+            // ═══════════════════════════════════════════════
+            // ADMIN — Tableau Excel
+            // ═══════════════════════════════════════════════
+            function renderAdminTable() {
+                const tbody = document.getElementById('adminTableBody');
+                tbody.innerHTML = '';
+                const allClients = users.filter(u => u.email !== ADMIN_EMAIL);
+                if (allClients.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="17" style="text-align:center;padding:2rem;color:var(--text-muted);">Aucun client inscrit pour le moment.</td></tr>';
+                    return;
+                }
+                allClients.forEach((u, i) => {
+                    const bal = (userBalances[u.email] || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2 });
+                    const statusMap = { active: 'status-badge-active', pending: 'status-badge-pending', rejected: 'status-badge-rejected', blocked: 'status-badge-blocked' };
+                    const statusLabel = { active: '✅ Approuvé', pending: '⏳ En attente', rejected: '❌ Rejeté', blocked: '🚫 Bloqué' };
+                    const st = u.status || 'pending';
+                    // Cellule pièces
+                    const hasRecto = !!u.cniRecto;
+                    const hasVerso = !!u.cniVerso;
+                    const hasFace  = !!(u.faceDescriptor && u.faceDescriptor.length);
+                    const piecesHtml = `
+                        ${hasRecto ? `<button onclick="viewDoc('${u.email}','recto')" style="background:var(--primary);color:white;border:none;padding:0.2rem 0.5rem;border-radius:6px;cursor:pointer;font-size:0.7rem;margin:1px;"><i class="fas fa-id-card"></i> Recto</button>` : '<span style="color:#ccc;font-size:0.7rem;">—</span>'}
+                        ${hasVerso ? `<button onclick="viewDoc('${u.email}','verso')" style="background:var(--primary-dark);color:white;border:none;padding:0.2rem 0.5rem;border-radius:6px;cursor:pointer;font-size:0.7rem;margin:1px;"><i class="fas fa-id-card"></i> Verso</button>` : ''}
+                        ${hasFace  ? `<span style="font-size:0.7rem;background:#e8f5e9;color:#2a9d8f;padding:0.2rem 0.5rem;border-radius:6px;margin:1px;"><i class="fas fa-face-smile"></i> Face ID</span>` : ''}
+                    `;
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="font-weight:700;color:var(--text-muted);">${i + 1}</td>
+                        <td style="font-weight:600;">${sanitize(u.firstName + ' ' + u.lastName)}</td>
+                        <td><a href="mailto:${sanitize(u.email)}" style="color:var(--primary);">${sanitize(u.email)}</a></td>
+                        <td>${sanitize(u.phone || '—')}</td>
+                        <td>${u.countryCode ? countryFlag(u.countryCode) : ''} ${sanitize(u.country || '—')}</td>
+                        <td>${sanitize(u.accountType || '—')}</td>
+                        <td style="font-family:monospace;font-size:0.72rem;">${sanitize(u.rib || '—')}</td>
+                        <td style="font-family:monospace;">${sanitize(u.bic || '—')}</td>
+                        <td style="font-family:monospace;">${sanitize(u.ifu || '—')}</td>
+                        <td style="max-width:150px;white-space:normal;">${sanitize(u.address || '—')}</td>
+                        <td>${u.salary ? u.salary.toLocaleString('fr-FR') + ' €' : '—'}</td>
+                        <td>${sanitize(u.profession || '—')}</td>
+                        <td>${sanitize(u.maritalStatus || '—')}</td>
+                        <td style="font-weight:700;color:var(--primary);">${bal} €</td>
+                        <td><span class="${statusMap[st] || 'status-badge-pending'}">${statusLabel[st] || '⏳'}</span></td>
+                        <td style="font-size:0.75rem;">${sanitize(u.registrationDate || '—')}</td>
+                        <td>${piecesHtml}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // Visionner une pièce d'identité
+            function viewDoc(email, side) {
+                const u = users.find(x => x.email === email);
+                if (!u) return;
+                const data = side === 'recto' ? u.cniRecto : u.cniVerso;
+                if (!data) return showToast('Aucune pièce enregistrée.', 'error');
+                const win = window.open();
+                win.document.write(`<html><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;">
+                    <img src="${data}" style="max-width:100%;max-height:100vh;border-radius:8px;">
+                    </body></html>`);
+            }
+
+            // Export CSV
+            function exportTableCSV() {
+                const allClients = users.filter(u => u.email !== ADMIN_EMAIL);
+                if (allClients.length === 0) { showToast('Aucun client à exporter.', 'error'); return; }
+                const headers = ['#','Nom','Prénom','Email','Téléphone','Pays','Type compte','IBAN','BIC','IFU/NIF','Adresse','Salaire','Profession','Situation','Solde','Statut','Date inscription'];
+                const rows = allClients.map((u, i) => [
+                    i+1, u.lastName||'', u.firstName||'', u.email||'', u.phone||'',
+                    u.country||'', u.accountType||'', u.rib||'', u.bic||'', u.ifu||'',
+                    (u.address||'').replace(/\n/g,' '), u.salary||'', u.profession||'',
+                    u.maritalStatus||'', (userBalances[u.email]||0).toFixed(2),
+                    u.status||'pending', u.registrationDate||''
+                ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','));
+                const csv = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = `NovaFinance_Clients_${new Date().toISOString().slice(0,10)}.csv`;
+                a.click(); URL.revokeObjectURL(url);
+                showToast('✅ Export CSV téléchargé !', 'success');
+            }
+
+            // Impression
+            function printTable() {
+                const table = document.getElementById('adminExcelTable');
+                const w = window.open('', '_blank');
+                w.document.write(`<html><head><title>Clients NovaFinance</title>
+                    <style>body{font-family:Arial,sans-serif;font-size:11px;}table{border-collapse:collapse;width:100%;}th,td{border:1px solid #ccc;padding:4px 6px;}th{background:#007f6e;color:white;}</style>
+                    </head><body><h2>NovaFinance-Collective — Liste des clients</h2>${table.outerHTML}</body></html>`);
+                w.document.close(); w.print();
+            }
+
+            // ═══════════════════════════════════════════════
+            // ADMIN — Créer un compte client
+            // ═══════════════════════════════════════════════
+            function populateAdminCountrySelect() {
+                const sel = document.getElementById('ac_country');
+                if (sel.options.length > 1) return; // déjà rempli
+                COUNTRIES.sort((a,b) => a.name.localeCompare(b.name,'fr')).forEach(c => {
+                    const o = document.createElement('option');
+                    o.value = c.code; o.textContent = `${countryFlag(c.code)} ${c.name}`;
+                    sel.appendChild(o);
+                });
+            }
+
+            function onAdminCountryChange() {
+                const code = document.getElementById('ac_country').value;
+                const config = IFU_CONFIG[code] || IFU_CONFIG.DEFAULT;
+                document.getElementById('ac_ifuLabel').textContent = config.label.split('—')[0].trim();
+                document.getElementById('ac_ifuHint').textContent = config.hint ? `Format : ${config.hint}` : '';
+                document.getElementById('ac_ifu').placeholder = config.example || 'Numéro fiscal';
+            }
+
+            document.getElementById('adminCreateClientForm').onsubmit = async (e) => {
+                e.preventDefault();
+                const msgEl = document.getElementById('adminCreateMsg');
+                const emailVal = document.getElementById('ac_email').value.trim().toLowerCase();
+                if (users.find(u => u.email.toLowerCase() === emailVal)) {
+                    msgEl.style.color = 'var(--error)';
+                    msgEl.textContent = '❌ Cet email est déjà utilisé.'; return;
+                }
+                const countryCode = document.getElementById('ac_country').value;
+                const countryObj = COUNTRIES.find(c => c.code === countryCode);
+                const countryName = countryObj ? countryObj.name : countryCode;
+                const accountType = document.getElementById('ac_accountType').value;
+                const tempPwd = document.getElementById('ac_password').value;
+                const hashedPwd = await hashPassword(tempPwd);
+                const rib = generateRIB(countryCode || 'FR');
+                const newUser = {
+                    id: Date.now(),
+                    lastName:      sanitize(document.getElementById('ac_lastName').value),
+                    firstName:     sanitize(document.getElementById('ac_firstName').value),
+                    email:         emailVal,
+                    password:      hashedPwd,
+                    phone:         sanitize(document.getElementById('ac_phone').value),
+                    address:       sanitize(document.getElementById('ac_address').value),
+                    country:       countryName,
+                    countryCode:   countryCode,
+                    accountType:   accountType,
+                    ifu:           sanitize(document.getElementById('ac_ifu').value.toUpperCase()),
+                    rib:           rib.iban,
+                    bic:           rib.bic,
+                    salary:        parseFloat(document.getElementById('ac_salary').value) || 0,
+                    maritalStatus: document.getElementById('ac_marital').value,
+                    profession:    sanitize(document.getElementById('ac_profession').value),
+                    extraIncome:   0,
+                    accountNumber: generateAccountNumber(),
+                    photoBase64:   null,
+                    faceDescriptor: null,
+                    cniRecto:      null,
+                    cniVerso:      null,
+                    status:        'active', // Compte créé par admin = directement actif
+                    createdByAdmin: true,
+                    registrationDate: new Date().toLocaleString('fr-FR')
+                };
+                users.push(newUser);
+                localStorage.setItem('novaUsers', JSON.stringify(users));
+                userBalances[emailVal] = 0;
+                userTransactions[emailVal] = [{ label: 'Compte ouvert par NovaFinance-Collective', date: new Date().toLocaleDateString('fr-FR'), amount: 0, type: 'credit' }];
+                localStorage.setItem('novaBalances', JSON.stringify(userBalances));
+                localStorage.setItem('novaTransactions', JSON.stringify(userTransactions));
+
+                // Email de notification au client
+                if (typeof emailjs !== 'undefined') {
+                    emailjs.send("mzsr9eq", "cber6xh", {
+                        firstName:     newUser.firstName,
+                        lastName:      newUser.lastName,
+                        userEmail:     newUser.email,
+                        phone:         newUser.phone,
+                        address:       newUser.address,
+                        salary:        newUser.salary,
+                        profession:    newUser.profession,
+                        maritalStatus: newUser.maritalStatus,
+                        accountNumber: newUser.accountNumber,
+                        registrationDate: `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🏦 Un compte ${newUser.accountType} vient d'être créé en votre nom dans les livrets de NovaFinance-Collective.
+
+🔐 Vos identifiants de connexion :
+   Email : ${newUser.email}
+   Mot de passe temporaire : ${tempPwd}
+
+🌐 Connectez-vous sur : https://novafinancecollective.pages.dev
+
+💡 Dès votre 1er versement, vous obtiendrez :
+   ✅ Votre RIB et IBAN international personnel
+   ✅ 40% de réduction sur vos premières transactions internationales
+
+Bienvenue dans la famille NovaFinance-Collective !
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+                        country:       newUser.country,
+                        accountType:   newUser.accountType,
+                        rib:           newUser.rib,
+                        ifu:           newUser.ifu || '—'
+                    }).catch(err => console.error('Email création admin:', err));
+                }
+                msgEl.style.color = 'var(--success)';
+                msgEl.textContent = `✅ Compte créé avec succès pour ${newUser.firstName} ${newUser.lastName} ! Email envoyé.`;
+                document.getElementById('adminCreateClientForm').reset();
+                loadAdminPanel();
+                showToast(`✅ Compte ${accountType} créé pour ${newUser.firstName} !`, 'success');
+            };
+
+            // ═══════════════════════════════════════════════
+            // ADMIN — Bloquer / Débloquer / Supprimer
+            // ═══════════════════════════════════════════════
+            function adminBlockUser(email) {
+                const idx = users.findIndex(u => u.email === email);
+                if (idx < 0) return;
+                users[idx].status = 'blocked';
+                localStorage.setItem('novaUsers', JSON.stringify(users));
+                showToast(`🚫 Compte de ${users[idx].firstName} ${users[idx].lastName} bloqué.`, 'error');
+                loadAdminPanel();
+            }
+
+            function adminUnblockUser(email) {
+                const idx = users.findIndex(u => u.email === email);
+                if (idx < 0) return;
+                users[idx].status = 'active';
+                localStorage.setItem('novaUsers', JSON.stringify(users));
+                showToast(`✅ Compte de ${users[idx].firstName} ${users[idx].lastName} débloqué.`, 'success');
+                loadAdminPanel();
+            }
+
+            function adminDeleteUser(email) {
+                const u = users.find(x => x.email === email);
+                if (!u) return;
+                if (!confirm(`⚠️ SUPPRESSION DÉFINITIVE\n\nÊtes-vous certain de vouloir supprimer le compte de ${u.firstName} ${u.lastName} (${email}) ?\n\nCette action est IRRÉVERSIBLE.`)) return;
+                users = users.filter(x => x.email !== email);
+                delete userBalances[email];
+                delete userTransactions[email];
+                localStorage.setItem('novaUsers', JSON.stringify(users));
+                localStorage.setItem('novaBalances', JSON.stringify(userBalances));
+                localStorage.setItem('novaTransactions', JSON.stringify(userTransactions));
+                showToast(`🗑️ Compte de ${u.firstName} ${u.lastName} supprimé définitivement.`, 'error');
+                loadAdminPanel();
+            }
                 const email = document.getElementById('adminTargetEmail').value;
                 const amount = parseFloat(document.getElementById('adminCreditAmount').value);
                 const label = document.getElementById('adminCreditLabel').value.trim();
@@ -3459,6 +4066,39 @@
                 <a href="mailto:novafinancecollective@gmail.com" style="color:var(--primary);font-weight:600;">novafinancecollective@gmail.com</a> &nbsp;|&nbsp;
                 <a href="https://wa.me/33689677308" target="_blank" style="color:var(--primary);font-weight:600;">+33 6 89 67 73 08</a>
             </div>
+        </div>
+    </div>
+    <!-- ══════════════════════════════════════════════════
+         MODAL 2FA — DOUBLE AUTHENTIFICATION ADMIN
+    ══════════════════════════════════════════════════ -->
+    <div id="modal2FA" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(8px);">
+        <div style="background:white;max-width:420px;width:92%;border-radius:24px;padding:2rem;position:relative;box-shadow:0 30px 60px rgba(0,0,0,0.3);">
+            <div style="text-align:center;margin-bottom:1.5rem;">
+                <div style="width:64px;height:64px;background:linear-gradient(135deg,#e9c46a,#cfa15e);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.8rem;">
+                    <i class="fas fa-shield-alt" style="color:#0a2b2e;"></i>
+                </div>
+                <h3 style="font-size:1.2rem;color:var(--primary-dark);margin-bottom:0.4rem;">Vérification en 2 étapes</h3>
+                <p style="font-size:0.85rem;color:var(--text-muted);">Un code de sécurité à 6 chiffres vient d'être envoyé à l'adresse email administrateur.</p>
+            </div>
+            <div style="background:rgba(233,196,106,0.1);border:1px solid rgba(233,196,106,0.3);border-radius:12px;padding:0.9rem;margin-bottom:1.2rem;font-size:0.82rem;color:#6b4f10;text-align:center;">
+                <i class="fas fa-clock"></i> Code valable <strong id="otpCountdown">5:00</strong> — usage unique
+            </div>
+            <div style="margin-bottom:1rem;">
+                <label style="display:block;font-weight:600;font-size:0.88rem;margin-bottom:0.5rem;">Code de vérification *</label>
+                <input type="text" id="otpInput" maxlength="6" placeholder="_ _ _ _ _ _"
+                    style="width:100%;padding:1rem;border:2px solid var(--border-light);border-radius:16px;font-family:monospace;font-size:1.6rem;text-align:center;letter-spacing:8px;outline:none;"
+                    oninput="this.value=this.value.replace(/[^0-9]/g,'');if(this.value.length===6)verifyOTP()">
+            </div>
+            <div id="otpError" style="color:var(--error);font-size:0.82rem;text-align:center;margin-bottom:0.8rem;display:none;"></div>
+            <button onclick="verifyOTP()" class="btn-primary" style="width:100%;padding:0.9rem;font-size:1rem;">
+                <i class="fas fa-check-circle"></i> Confirmer l'accès admin
+            </button>
+            <div style="text-align:center;margin-top:1rem;">
+                <button id="resendOTPBtn" onclick="resendOTP()" style="background:none;border:none;color:var(--primary);font-size:0.82rem;cursor:pointer;text-decoration:underline;">
+                    Renvoyer le code
+                </button>
+            </div>
+            <button onclick="cancel2FA()" style="position:absolute;top:1rem;right:1.2rem;background:none;border:none;font-size:1.6rem;cursor:pointer;color:#999;">&times;</button>
         </div>
     </div>
 
