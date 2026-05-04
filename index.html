@@ -3,8 +3,32 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#007f6e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>NovaFinance-Collective | Banque innovante</title>
+
+    <!-- Traduction automatique Google Translate -->
+    <script>
+    function googleTranslateElementInit() {
+        new google.translate.TranslateElement({
+            pageLanguage: 'fr',
+            autoDisplay: true,
+            layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+            multilanguagePage: true
+        }, 'google_translate_element');
+    }
+    // Détection langue navigateur et traduction auto
+    (function() {
+        const browserLang = (navigator.language || navigator.userLanguage || 'fr').split('-')[0];
+        if (browserLang !== 'fr') {
+            document.cookie = `googtrans=/fr/${browserLang}; path=/; domain=${location.hostname}`;
+            document.cookie = `googtrans=/fr/${browserLang}; path=/`;
+        }
+    })();
+    </script>
+    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -596,31 +620,85 @@
             font-size: 0.8rem;
         }
         
+        /* ════════════════════════════════════════
+           RESPONSIVITÉ — Mobile / Tablet / PC
+           ════════════════════════════════════════ */
+        @media (max-width: 480px) {
+            .container { padding: 0 14px; }
+            .nav-container { flex-direction: column; padding: 0.8rem 0; gap: 0.8rem; }
+            .nav-links { gap: 0.5rem; flex-wrap: wrap; justify-content: center; }
+            .nav-links a { font-size: 0.8rem; }
+            .btn-outline, .btn-primary { padding: 0.45rem 0.9rem; font-size: 0.8rem; }
+            .hero { padding: 1.5rem 0 2rem; }
+            .hero-content h1 { font-size: 1.55rem; line-height: 1.3; }
+            .hero-stats { flex-direction: column; gap: 0.6rem; }
+            .hero-grid { flex-direction: column; gap: 1.2rem; }
+            .section { padding: 2rem 0; }
+            .section-title { font-size: 1.35rem; }
+            .form-row { grid-template-columns: 1fr; gap: 0; }
+            .modal-content { margin: 0.3rem; padding: 1.1rem; border-radius: 16px; max-width: 100%; }
+            .balance .amount { font-size: 1.7rem; }
+            .balance-row { flex-direction: column; gap: 0.8rem; }
+            .contact-bar { flex-direction: column; }
+            .footer-grid { grid-template-columns: 1fr 1fr; gap: 1rem; }
+            .info-grid { grid-template-columns: 1fr; }
+            .profile-header { flex-direction: column; gap: 1rem; }
+            .balance-amount { font-size: 1.7rem; }
+            .dash-layout { flex-direction: column !important; }
+            .dash-sidebar { flex-direction: row !important; overflow-x: auto; width: 100%; min-width: unset; padding: 0.5rem; gap: 0.3rem; border-right: none; border-bottom: 1px solid var(--border-light); }
+            .dash-nav-item { flex-direction: column !important; gap: 0.15rem; padding: 0.55rem 0.7rem; min-width: 64px; font-size: 0.65rem; text-align: center; border-radius: 10px; }
+            .dash-nav-item i { font-size: 1rem; }
+            .dash-nav-item span { display: block !important; font-size: 0.6rem; }
+            .dash-main { padding: 0.8rem; }
+            .action-grid { grid-template-columns: repeat(3,1fr) !important; gap: 0.4rem; }
+            .action-btn-card { padding: 0.65rem 0.3rem; border-radius: 12px; }
+            .action-btn-card i { font-size: 1.1rem; }
+            .action-btn-card span { font-size: 0.6rem; }
+            .biometric-section { padding: 1rem; }
+            .webcam-container { width: 130px; height: 130px; }
+            .rib-box { padding: 0.8rem; }
+            .rib-box .rib-value { font-size: 0.78rem; letter-spacing: 0.5px; }
+            .partners-grid { gap: 0.6rem; }
+            .partner-badge { font-size: 0.7rem; padding: 0.45rem 0.7rem; }
+            .admin-tab { padding: 0.4rem 0.6rem; font-size: 0.72rem; }
+            #adminExcelTable { font-size: 0.7rem; }
+        }
+
+        @media (min-width: 481px) and (max-width: 768px) {
+            .container { padding: 0 20px; }
+            .hero-content h1 { font-size: 2rem; }
+            .hero-grid { flex-direction: column; gap: 2rem; }
+            .form-row { grid-template-columns: 1fr; }
+            .dash-layout { flex-direction: column !important; }
+            .dash-sidebar { flex-direction: row !important; overflow-x: auto; width: 100%; min-width: unset; border-right: none; border-bottom: 1px solid var(--border-light); padding: 0.5rem; gap: 0.4rem; }
+            .dash-nav-item { flex-direction: column !important; gap: 0.2rem; padding: 0.6rem; min-width: 76px; font-size: 0.7rem; text-align: center; }
+            .footer-grid { grid-template-columns: 1fr 1fr; }
+            .info-grid { grid-template-columns: 1fr 1fr; }
+        }
+
         @media (max-width: 900px) {
-            .nav-container {
-                flex-direction: column;
-                align-items: center;
-            }
-            .hero-content h1 {
-                font-size: 2.2rem;
-            }
-            .hero-grid {
-                flex-direction: column;
-            }
-            .container {
-                padding: 0 20px;
-            }
-            .contact-bar {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-            .modal-content {
-                margin: 1rem;
-                padding: 1.5rem;
-            }
+            .nav-container { flex-direction: column; align-items: center; }
+            .hero-content h1 { font-size: 2.2rem; }
+            .hero-grid { flex-direction: column; }
+            .contact-bar { flex-direction: column; align-items: flex-start; }
+            .form-row { grid-template-columns: 1fr; }
+            .modal-content { margin: 1rem; padding: 1.5rem; }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .info-grid { grid-template-columns: 1fr 1fr; }
+            .footer-grid { grid-template-columns: repeat(2,1fr); }
+        }
+
+        /* Tap targets accessibles sur tactile */
+        @media (hover: none) and (pointer: coarse) {
+            .btn-primary, .btn-outline, .dash-nav-item, .admin-tab, button { min-height: 44px; }
+        }
+
+        /* Safe area iPhone (encoche) */
+        @supports (padding: env(safe-area-inset-bottom)) {
+            body { padding-bottom: env(safe-area-inset-bottom); }
+            .navbar { padding-top: env(safe-area-inset-top); }
         }
         
         .notification {
@@ -987,6 +1065,7 @@
                 <button class="btn-outline" id="openAccountBtn">Ouvrir un compte</button>
                 <button class="btn-primary" id="loginBtn">Accès client</button>
             </div>
+        <div id="google_translate_element" style="display:inline-flex;align-items:center;"></div>
             <div class="user-info hidden" id="userInfo">
                 <span id="userNameDisplay" style="font-weight: 600;"></span>
                 <button class="btn-logout" id="logoutBtn">Déconnexion</button>
@@ -2697,14 +2776,15 @@
                 if (user.status === 'blocked') {
                     errorEl.innerHTML = `<div style="background:rgba(123,31,162,0.08);border:1px solid rgba(123,31,162,0.25);border-radius:12px;padding:1rem;text-align:left;">
                         <p style="font-weight:700;margin-bottom:0.4rem;color:#7b1fa2;">🚫 Accès temporairement suspendu</p>
-                        <p style="font-size:0.85rem;">L'accès à votre compte a été temporairement suspendu. Veuillez contacter votre gestionnaire Nova pour plus d'informations.</p>
+                        <p style="font-size:0.85rem;">L'accès à votre compte a été temporairement suspendu. Veuillez contacter votre gestionnaire Nova.</p>
                         <p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.4rem;">novafinancecollective@gmail.com &nbsp;|&nbsp; +33 6 89 67 73 08</p>
                     </div>`;
                     return;
                 }
+                if (user.status === 'pending') {
                     errorEl.innerHTML = `<div style="background:rgba(233,196,106,0.12);border:1px solid rgba(233,196,106,0.4);border-radius:12px;padding:1rem;text-align:left;">
                         <p style="font-weight:700;margin-bottom:0.4rem;">⏳ Compte en cours de vérification</p>
-                        <p style="font-size:0.85rem;margin-bottom:0.4rem;">Notre équipe examine vos documents et informations. Vous recevrez une réponse par email sous <strong>48h maximum</strong>.</p>
+                        <p style="font-size:0.85rem;margin-bottom:0.4rem;">Notre équipe examine vos documents. Vous recevrez une réponse par email sous <strong>48h maximum</strong>.</p>
                         <p style="font-size:0.8rem;color:var(--text-muted);">Contact : novafinancecollective@gmail.com &nbsp;|&nbsp; +33 6 89 67 73 08</p>
                     </div>`;
                     return;
@@ -3599,7 +3679,9 @@
                 document.getElementById('ac_ifu').placeholder = config.example || 'Numéro fiscal';
             }
 
-            document.getElementById('adminCreateClientForm').onsubmit = async (e) => {
+            // Admin create form — init différé et défensif
+            const _acForm = document.getElementById('adminCreateClientForm');
+            if (_acForm) { _acForm.onsubmit = async (e) => {
                 e.preventDefault();
                 const msgEl = document.getElementById('adminCreateMsg');
                 const emailVal = document.getElementById('ac_email').value.trim().toLowerCase();
@@ -3687,7 +3769,7 @@ Bienvenue dans la famille NovaFinance-Collective !
                 document.getElementById('adminCreateClientForm').reset();
                 loadAdminPanel();
                 showToast(`✅ Compte ${accountType} créé pour ${newUser.firstName} !`, 'success');
-            };
+            }; } // fin adminCreateClientForm if
 
             // ═══════════════════════════════════════════════
             // ADMIN — Bloquer / Débloquer / Supprimer
@@ -3723,13 +3805,8 @@ Bienvenue dans la famille NovaFinance-Collective !
                 showToast(`🗑️ Compte de ${u.firstName} ${u.lastName} supprimé définitivement.`, 'error');
                 loadAdminPanel();
             }
+            function adminCreditAccount() {
                 const email = document.getElementById('adminTargetEmail').value;
-                const amount = parseFloat(document.getElementById('adminCreditAmount').value);
-                const label = document.getElementById('adminCreditLabel').value.trim();
-                const msgEl = document.getElementById('adminCreditMsg');
-                if (!email) { msgEl.style.color='var(--error)'; msgEl.textContent='❌ Sélectionnez un client.'; return; }
-                if (!amount || amount <= 0) { msgEl.style.color='var(--error)'; msgEl.textContent='❌ Montant invalide.'; return; }
-                if (!label) { msgEl.style.color='var(--error)'; msgEl.textContent='❌ Précisez le motif.'; return; }
 
                 // Crédit virtuel — marqué non-retirable
                 if (!userTransactions[email]) userTransactions[email] = [];
