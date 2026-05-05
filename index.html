@@ -2430,27 +2430,6 @@
                 </div>`;
             }
 
-            function email2FA(otp) {
-                return `
-                <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;background:#f8fafc;padding:20px;">
-                  <div style="background:linear-gradient(135deg,#e9c46a,#cfa15e);padding:24px;border-radius:16px 16px 0 0;text-align:center;">
-                    <h1 style="color:#0a2b2e;margin:0;font-size:22px;">🔐 Code de vérification 2FA</h1>
-                    <p style="color:#5a3e10;margin:6px 0 0;font-size:14px;">NovaFinance-Collective — Accès Administrateur</p>
-                  </div>
-                  <div style="background:white;padding:30px;border-radius:0 0 16px 16px;border:1px solid #e2e8f0;text-align:center;">
-                    <p style="color:#444;margin-bottom:20px;">Votre code de connexion administrateur :</p>
-                    <div style="background:#0a2b2e;padding:20px 30px;border-radius:16px;display:inline-block;margin:0 auto;">
-                      <span style="font-family:monospace;font-size:38px;font-weight:900;letter-spacing:12px;color:#e9c46a;">${otp}</span>
-                    </div>
-                    <p style="color:#e76f51;font-weight:bold;margin:20px 0 8px;">⏱ Valable 5 minutes uniquement</p>
-                    <p style="color:#888;font-size:13px;">Ne partagez jamais ce code. Si vous n'êtes pas à l'origine de cette demande, contactez immédiatement <a href="mailto:novafinancecollective@gmail.com" style="color:#007f6e;">novafinancecollective@gmail.com</a></p>
-                    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #f0f0f0;">
-                      <p style="color:#bbb;font-size:12px;margin:0;">© 2025 NovaFinance-Collective | Système de sécurité automatisé</p>
-                    </div>
-                  </div>
-                </div>`;
-            }
-
             // Fix #5 : Hachage des mots de passe avec Web Crypto API (SHA-256)
             async function hashPassword(pwd) {
                 const enc = new TextEncoder();
@@ -3011,22 +2990,12 @@
                 // ── Connexion réussie ──
                 resetLoginAttempts();
 
-                // Admin → déclencher 2FA obligatoire
-                if (user.email === ADMIN_EMAIL) {
-                    _2fa_pending_user = user;
-                    _2fa_validated_user = user;
-                    loginModal.style.display = 'none';
-                    document.getElementById('loginForm').reset();
-                    errorEl.innerText = '';
-                    sendAdminOTP(user);
-                    return;
-                }
-
-                // Client normal → connexion directe
+                // ── Connexion réussie (admin et client) ──
+                resetLoginAttempts();
                 currentUser = user;
                 sessionStorage.setItem('novaCurrentUser', JSON.stringify(user));
                 updateUIForUser();
-                resetSessionTimer(false);
+                resetSessionTimer(isAdmin(user));
                 loginModal.style.display = 'none';
                 document.getElementById('loginForm').reset();
                 errorEl.innerText = "";
@@ -3036,7 +3005,7 @@
             document.getElementById('logoutBtn').onclick = () => {
                 currentUser = null;
                 sessionStorage.removeItem('novaCurrentUser');
-                sessionStorage.removeItem('nova_2fa_verified');
+                
                 clearTimeout(sessionTimer);
                 updateUIForUser();
                 showToast("🔒 Déconnecté avec succès", "info");
@@ -3471,139 +3440,7 @@
                 } catch(e) {}
             })();
 
-            // ═══════════════════════════════════════════════
-            // 2FA — Double Authentification Admin (OTP email)
-            // ═══════════════════════════════════════════════
-            let _2fa_pending_user = null;
-            let _2fa_otp = null;
-            let _2fa_expiry = null;
-            let _2fa_countdown_interval = null;
-            let _2fa_attempts = 0;
-            const MAX_OTP_ATTEMPTS = 3;
 
-            function generateOTP() {
-                return Math.floor(100000 + Math.random() * 900000).toString();
-            }
-
-            async function sendAdminOTP(user) {
-                _2fa_otp = generateOTP();
-                _2fa_expiry = Date.now() + 5 * 60 * 1000;
-                _2fa_attempts = 0;
-
-                // Envoi du code OTP — OBLIGATOIRE sur jonathan.burrows2000@gmail.com via SendPulse
-                const ADMIN_OTP_EMAIL = 'jonathan.burrows2000@gmail.com';
-
-                const emailSent = await sendEmail(
-                    ADMIN_OTP_EMAIL,
-                    'Administrateur Nova',
-                    '🔐 Code 2FA — Connexion NovaFinance Admin',
-                    email2FA(_2fa_otp)
-                );
-
-                // Si l'email n'a PAS été envoyé → connexion bloquée, aucun code affiché
-                if (!emailSent) {
-                    _2fa_otp = null;
-                    _2fa_pending_user = null;
-                    _2fa_validated_user = null;
-                    const errEl = document.getElementById('loginError');
-                    if (errEl) {
-                        errEl.innerHTML = `<div style="background:rgba(231,111,81,0.08);border:1px solid rgba(231,111,81,0.3);border-radius:12px;padding:1rem;">
-                            <p style="font-weight:700;color:var(--error);margin-bottom:0.3rem;">❌ Envoi du code 2FA impossible</p>
-                            <p style="font-size:0.85rem;">Le service d'email est temporairement indisponible. Connexion refusée par mesure de sécurité. Réessayez dans quelques minutes.</p>
-                        </div>`;
-                    }
-                    loginModal.style.display = 'block';
-                    return;
-                }
-
-                // Email envoyé avec succès → afficher le modal de saisie du code
-                document.getElementById('modal2FA').style.display = 'flex';
-                document.getElementById('otpInput').value = '';
-                document.getElementById('otpError').style.display = 'none';
-                document.getElementById('resendOTPBtn').disabled = true;
-                const sentEl = document.getElementById('otpSentMsg');
-                if (sentEl) sentEl.textContent = `📧 Code envoyé sur ${ADMIN_OTP_EMAIL}`;
-                start2FACountdown();
-                setTimeout(() => {
-                    const btn = document.getElementById('resendOTPBtn');
-                    if (btn) btn.disabled = false;
-                }, 60000);
-            }
-
-            function start2FACountdown() {
-                clearInterval(_2fa_countdown_interval);
-                const el = document.getElementById('otpCountdown');
-                _2fa_countdown_interval = setInterval(() => {
-                    const remaining = Math.max(0, _2fa_expiry - Date.now());
-                    const m = Math.floor(remaining / 60000);
-                    const s = Math.floor((remaining % 60000) / 1000);
-                    if (el) el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
-                    if (remaining === 0) {
-                        clearInterval(_2fa_countdown_interval);
-                        cancel2FA();
-                        showToast('⏱ Code expiré. Veuillez vous reconnecter.', 'error');
-                    }
-                }, 1000);
-            }
-
-            function verifyOTP() {
-                const entered = document.getElementById('otpInput').value.trim();
-                const errEl = document.getElementById('otpError');
-                if (!entered || entered.length !== 6) {
-                    errEl.textContent = '❌ Entrez le code à 6 chiffres reçu par email.';
-                    errEl.style.display = 'block'; return;
-                }
-                if (Date.now() > _2fa_expiry) {
-                    errEl.textContent = '⏱ Code expiré. Cliquez sur "Renvoyer le code".';
-                    errEl.style.display = 'block'; return;
-                }
-                _2fa_attempts++;
-                if (entered !== _2fa_otp) {
-                    if (_2fa_attempts >= MAX_OTP_ATTEMPTS) {
-                        cancel2FA();
-                        showToast('🔒 Trop de tentatives OTP. Reconnectez-vous.', 'error');
-                        return;
-                    }
-                    errEl.textContent = `❌ Code incorrect. (${MAX_OTP_ATTEMPTS - _2fa_attempts} tentative(s) restante(s))`;
-                    errEl.style.display = 'block';
-                    document.getElementById('otpInput').value = '';
-                    return;
-                }
-                // OTP valide — finaliser connexion admin
-                clearInterval(_2fa_countdown_interval);
-                document.getElementById('modal2FA').style.display = 'none';
-                _2fa_otp = null; _2fa_pending_user = null;
-                currentUser = _2fa_validated_user;
-                sessionStorage.setItem('novaCurrentUser', JSON.stringify(currentUser));
-                sessionStorage.setItem('nova_2fa_verified', Date.now().toString());
-                updateUIForUser();
-                resetSessionTimer(true); // session courte pour admin
-                showToast('✅ Double authentification réussie — Accès admin autorisé', 'success');
-            }
-
-            function saveOTPTemplate() {
-                const val = document.getElementById('otpTemplateInput').value.trim();
-                if (val) {
-                    localStorage.setItem('nova_otp_template', val);
-                    showToast('✅ Template OTP sauvegardé : ' + val, 'success');
-                    document.getElementById('otpTemplateSetup').style.display = 'none';
-                }
-            }
-
-            function resendOTP() {
-                if (_2fa_pending_user) sendAdminOTP(_2fa_pending_user);
-                showToast('📧 Nouveau code envoyé par email', 'info');
-                document.getElementById('resendOTPBtn').disabled = true;
-                setTimeout(() => { document.getElementById('resendOTPBtn').disabled = false; }, 60000);
-            }
-
-            function cancel2FA() {
-                clearInterval(_2fa_countdown_interval);
-                document.getElementById('modal2FA').style.display = 'none';
-                _2fa_pending_user = null; _2fa_otp = null; _2fa_validated_user = null;
-            }
-
-            let _2fa_validated_user = null;
 
             function sanitize(str) {
                 const d = document.createElement('div');
@@ -3643,7 +3480,7 @@
                         if (currentUser) {
                             currentUser = null;
                             sessionStorage.removeItem('novaCurrentUser');
-                            sessionStorage.removeItem('nova_2fa_verified');
+                            
                             updateUIForUser();
                             showToast('⏱ Session expirée. Veuillez vous reconnecter.', 'error');
                         }
@@ -4182,7 +4019,8 @@
             </form>
         </div>
     </div>
-    <!-- ══════════════════════════════════════════════════
+
+    <!-- ══════════════════════════════════════════════════
          MODAL — MENTIONS LÉGALES
     ══════════════════════════════════════════════════ -->
     <div id="modalMentions" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(6px);" onclick="if(event.target===this)this.style.display='none'">
@@ -4324,41 +4162,5 @@
             </div>
         </div>
     </div>
-    <!-- ══════════════════════════════════════════════════
-         MODAL 2FA — DOUBLE AUTHENTIFICATION ADMIN
-    ══════════════════════════════════════════════════ -->
-    <div id="modal2FA" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(8px);">
-        <div style="background:white;max-width:420px;width:92%;border-radius:24px;padding:2rem;position:relative;box-shadow:0 30px 60px rgba(0,0,0,0.3);">
-            <div style="text-align:center;margin-bottom:1.5rem;">
-                <div style="width:64px;height:64px;background:linear-gradient(135deg,#e9c46a,#cfa15e);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.8rem;">
-                    <i class="fas fa-shield-alt" style="color:#0a2b2e;"></i>
-                </div>
-                <h3 style="font-size:1.2rem;color:var(--primary-dark);margin-bottom:0.4rem;">Vérification en 2 étapes</h3>
-                <p id="otpSentMsg" style="font-size:0.85rem;color:var(--primary);font-weight:600;margin-bottom:0.3rem;">📧 Envoi du code en cours…</p>
-                <p style="font-size:0.82rem;color:var(--text-muted);">Un code de sécurité à 6 chiffres a été envoyé à votre adresse email administrateur.</p>
-            </div>
-
-            <div style="background:rgba(233,196,106,0.1);border:1px solid rgba(233,196,106,0.3);border-radius:12px;padding:0.9rem;margin-bottom:1.2rem;font-size:0.82rem;color:#6b4f10;text-align:center;">
-                <i class="fas fa-clock"></i> Code valable <strong id="otpCountdown">5:00</strong> — usage unique
-            </div>
-            <div style="margin-bottom:1rem;">
-                <label style="display:block;font-weight:600;font-size:0.88rem;margin-bottom:0.5rem;">Code de vérification *</label>
-                <input type="text" id="otpInput" maxlength="6" placeholder="_ _ _ _ _ _"
-                    style="width:100%;padding:1rem;border:2px solid var(--border-light);border-radius:16px;font-family:monospace;font-size:1.6rem;text-align:center;letter-spacing:8px;outline:none;"
-                    oninput="this.value=this.value.replace(/[^0-9]/g,'');if(this.value.length===6)verifyOTP()">
-            </div>
-            <div id="otpError" style="color:var(--error);font-size:0.82rem;text-align:center;margin-bottom:0.8rem;display:none;"></div>
-            <button onclick="verifyOTP()" class="btn-primary" style="width:100%;padding:0.9rem;font-size:1rem;">
-                <i class="fas fa-check-circle"></i> Confirmer l'accès admin
-            </button>
-            <div style="text-align:center;margin-top:1rem;">
-                <button id="resendOTPBtn" onclick="resendOTP()" style="background:none;border:none;color:var(--primary);font-size:0.82rem;cursor:pointer;text-decoration:underline;">
-                    Renvoyer le code
-                </button>
-            </div>
-            <button onclick="cancel2FA()" style="position:absolute;top:1rem;right:1.2rem;background:none;border:none;font-size:1.6rem;cursor:pointer;color:#999;">&times;</button>
-        </div>
-    </div>
-
 </body>
 </html>
