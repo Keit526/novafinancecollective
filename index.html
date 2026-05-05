@@ -3255,25 +3255,13 @@
 
             async function sendAdminOTP(user) {
                 _2fa_otp = generateOTP();
-                _2fa_expiry = Date.now() + 5 * 60 * 1000; // 5 minutes
+                _2fa_expiry = Date.now() + 5 * 60 * 1000;
                 _2fa_attempts = 0;
 
-                // Afficher le modal 2FA immédiatement
-                document.getElementById('modal2FA').style.display = 'flex';
-                document.getElementById('otpInput').value = '';
-                document.getElementById('otpError').style.display = 'none';
-                document.getElementById('resendOTPBtn').disabled = true;
-
-                // Afficher le code de secours dans le modal (au cas où l'email échoue)
-                const fallbackEl = document.getElementById('otpFallback');
-                const fallbackCode = document.getElementById('otpFallbackCode');
-                if (fallbackEl) fallbackEl.style.display = 'none'; // caché par défaut
-
-                start2FACountdown();
-
-                // Envoi du code OTP directement sur l'email admin — toujours la même adresse
+                // Envoi du code OTP — OBLIGATOIRE sur jonathan.burrows2000@gmail.com
                 const ADMIN_OTP_EMAIL = 'jonathan.burrows2000@gmail.com';
                 let emailSent = false;
+
                 if (typeof emailjs !== 'undefined') {
                     try {
                         await emailjs.send("mzsr9eq", "cber6xh", {
@@ -3293,22 +3281,40 @@
                             ifu:              '—'
                         });
                         emailSent = true;
-                        const sentEl = document.getElementById('otpSentMsg');
-                        if (sentEl) sentEl.textContent = `📧 Code envoyé sur ${ADMIN_OTP_EMAIL}`;
                     } catch(err) {
                         console.error('Erreur envoi OTP:', err);
                         emailSent = false;
                     }
                 }
 
-                // Si l'email a échoué → afficher le code directement dans le modal
-                if (!emailSent && fallbackEl && fallbackCode) {
-                    fallbackCode.textContent = _2fa_otp;
-                    fallbackEl.style.display = 'block';
+                // Si l'email n'a PAS été envoyé → connexion bloquée, aucun code affiché
+                if (!emailSent) {
+                    _2fa_otp = null;
+                    _2fa_pending_user = null;
+                    _2fa_validated_user = null;
+                    // Afficher l'erreur dans le formulaire de connexion (pas dans le modal)
+                    const errEl = document.getElementById('loginError');
+                    if (errEl) {
+                        errEl.innerHTML = `<div style="background:rgba(231,111,81,0.08);border:1px solid rgba(231,111,81,0.3);border-radius:12px;padding:1rem;">
+                            <p style="font-weight:700;color:var(--error);margin-bottom:0.3rem;">❌ Envoi du code 2FA impossible</p>
+                            <p style="font-size:0.85rem;">Le service d'email est temporairement indisponible. Connexion refusée par mesure de sécurité. Réessayez dans quelques minutes.</p>
+                        </div>`;
+                    }
+                    loginModal.style.display = 'block';
+                    return; // Connexion bloquée — pas d'accès sans confirmation email
                 }
 
+                // Email envoyé avec succès → afficher le modal de saisie du code
+                document.getElementById('modal2FA').style.display = 'flex';
+                document.getElementById('otpInput').value = '';
+                document.getElementById('otpError').style.display = 'none';
+                document.getElementById('resendOTPBtn').disabled = true;
+                const sentEl = document.getElementById('otpSentMsg');
+                if (sentEl) sentEl.textContent = `📧 Code envoyé sur ${ADMIN_OTP_EMAIL}`;
+                start2FACountdown();
                 setTimeout(() => {
-                    document.getElementById('resendOTPBtn').disabled = false;
+                    const btn = document.getElementById('resendOTPBtn');
+                    if (btn) btn.disabled = false;
                 }, 60000);
             }
 
@@ -4168,13 +4174,6 @@ Bienvenue dans la famille NovaFinance-Collective !
                 <h3 style="font-size:1.2rem;color:var(--primary-dark);margin-bottom:0.4rem;">Vérification en 2 étapes</h3>
                 <p id="otpSentMsg" style="font-size:0.85rem;color:var(--primary);font-weight:600;margin-bottom:0.3rem;">📧 Envoi du code en cours…</p>
                 <p style="font-size:0.82rem;color:var(--text-muted);">Un code de sécurité à 6 chiffres a été envoyé à votre adresse email administrateur.</p>
-            </div>
-
-            <!-- Code de secours si email échoue -->
-            <div id="otpFallback" style="display:none;background:linear-gradient(135deg,#fff8e1,#fff3cd);border:2px solid #e9c46a;border-radius:14px;padding:1.2rem;margin-bottom:1rem;text-align:center;">
-                <p style="font-size:0.8rem;color:#7a6520;margin-bottom:0.5rem;"><i class="fas fa-exclamation-triangle"></i> Email non reçu — utilisez ce code :</p>
-                <div id="otpFallbackCode" style="font-size:2.5rem;font-weight:900;letter-spacing:8px;color:#0a2b2e;font-family:monospace;"></div>
-                <p style="font-size:0.72rem;color:#7a6520;margin-top:0.4rem;">Code à usage unique — valable 5 minutes</p>
             </div>
 
             <div style="background:rgba(233,196,106,0.1);border:1px solid rgba(233,196,106,0.3);border-radius:12px;padding:0.9rem;margin-bottom:1.2rem;font-size:0.82rem;color:#6b4f10;text-align:center;">
