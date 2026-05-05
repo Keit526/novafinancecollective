@@ -10,8 +10,6 @@
     <title>NovaFinance-Collective | Banque innovante</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    <!-- Biométrie réelle : face-api.js (ML dans le navigateur, aucun serveur requis) -->
     <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
     <style>
         /* === VOTRE STYLE ORIGINAL CONSERVÉ === */
@@ -2219,9 +2217,238 @@
         </div>
 
         <script>
-            // EmailJS initialisé avec la vraie clé publique
-            if (typeof emailjs !== 'undefined') {
-                emailjs.init("SGx1vYYlie5Ludikw");
+            // ═══════════════════════════════════════════════
+            // MOTEUR EMAIL — SendPulse API (100% hardcodé)
+            // Clé API directement dans le code — aucun template externe
+            // Tous les emails partent de ce système vers les destinataires
+            // ═══════════════════════════════════════════════
+            const SP_API_KEY      = 'sp_apikey_89c0d4e37e3c6fe603b71b3399edc23370a72409a82cdd5ede1b41acd8036c88';
+            const NOVA_FROM_EMAIL = 'novafinancecollective@gmail.com';
+            const NOVA_FROM_NAME  = 'NovaFinance-Collective';
+            const NOVA_ADMIN_EMAIL = 'novafinancecollective@gmail.com';
+
+            // Cache du token OAuth SendPulse
+            let _spToken = null;
+            let _spTokenExpiry = 0;
+
+            async function getSPToken() {
+                if (_spToken && Date.now() < _spTokenExpiry) return _spToken;
+                try {
+                    const res = await fetch('https://api.sendpulse.com/oauth/access_token', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            grant_type:    'client_credentials',
+                            client_id:     SP_API_KEY,
+                            client_secret: SP_API_KEY
+                        })
+                    });
+                    const data = await res.json();
+                    if (data.access_token) {
+                        _spToken = data.access_token;
+                        _spTokenExpiry = Date.now() + ((data.expires_in || 3600) - 120) * 1000;
+                        return _spToken;
+                    }
+                } catch(err) { console.error('SP token error:', err); }
+                return null;
+            }
+
+            async function sendEmail(toEmail, toName, subject, htmlBody) {
+                try {
+                    const token = await getSPToken();
+                    if (!token) {
+                        console.error('SendPulse: impossible d\'obtenir le token');
+                        return false;
+                    }
+                    const res = await fetch('https://api.sendpulse.com/smtp/emails', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            email: {
+                                html:    htmlBody,
+                                text:    subject,
+                                subject: subject,
+                                from:    { name: NOVA_FROM_NAME, email: NOVA_FROM_EMAIL },
+                                to:      [{ name: toName || toEmail, email: toEmail }]
+                            }
+                        })
+                    });
+                    const result = await res.json();
+                    if (res.ok) { console.log('✅ Email envoyé à', toEmail); return true; }
+                    console.error('SendPulse erreur:', result);
+                    return false;
+                } catch(err) {
+                    console.error('sendEmail error:', err);
+                    return false;
+                }
+            }
+
+            // Templates HTML des emails — contenu hardcodé dans le code
+            function emailConfirmationClient(u) {
+                return `
+                <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f8fafc;padding:20px;">
+                  <div style="background:linear-gradient(135deg,#0a2b2e,#007f6e);padding:30px;border-radius:16px 16px 0 0;text-align:center;">
+                    <h1 style="color:white;margin:0;font-size:24px;">NovaFinance-Collective</h1>
+                    <p style="color:rgba(255,255,255,0.8);margin:8px 0 0;">L'Innovation Financière au Service de Tous</p>
+                  </div>
+                  <div style="background:white;padding:30px;border-radius:0 0 16px 16px;border:1px solid #e2e8f0;">
+                    <h2 style="color:#0a2b2e;">Bonjour ${u.firstName} ${u.lastName},</h2>
+                    <p style="color:#444;line-height:1.7;">Nous avons bien reçu votre demande d'ouverture de compte <strong>${u.accountType || 'Nova'}</strong>. Votre dossier est en cours de traitement.</p>
+                    <div style="background:#f0faf8;border-left:4px solid #007f6e;padding:16px;border-radius:8px;margin:20px 0;">
+                      <p style="margin:0;font-size:14px;color:#007f6e;font-weight:bold;">⏱ Délai de réponse : 48h maximum</p>
+                    </div>
+                    <table style="width:100%;border-collapse:collapse;font-size:14px;margin:20px 0;">
+                      <tr style="background:#f8fafc;"><td style="padding:10px;font-weight:bold;color:#555;width:40%;">N° de dossier</td><td style="padding:10px;font-family:monospace;">${u.accountNumber}</td></tr>
+                      <tr><td style="padding:10px;font-weight:bold;color:#555;">Pays</td><td style="padding:10px;">${u.country || '—'}</td></tr>
+                      <tr style="background:#f8fafc;"><td style="padding:10px;font-weight:bold;color:#555;">Type de compte</td><td style="padding:10px;">${u.accountType || '—'}</td></tr>
+                      <tr><td style="padding:10px;font-weight:bold;color:#555;">Date de demande</td><td style="padding:10px;">${u.registrationDate}</td></tr>
+                    </table>
+                    <p style="color:#444;line-height:1.7;">En cas de question, contactez-nous :<br>
+                      📧 <a href="mailto:novafinancecollective@gmail.com" style="color:#007f6e;">novafinancecollective@gmail.com</a><br>
+                      📱 <a href="https://wa.me/33689677308" style="color:#007f6e;">+33 6 89 67 73 08</a>
+                    </p>
+                    <div style="background:#0a2b2e;padding:16px;border-radius:8px;margin-top:20px;text-align:center;">
+                      <p style="color:white;margin:0;font-size:13px;">© 2025 NovaFinance-Collective | SAS | Paris 75013 & Montréal | SIRET : 951 400 530 00014</p>
+                    </div>
+                  </div>
+                </div>`;
+            }
+
+            function emailNotifAdmin(u) {
+                return `
+                <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;">
+                  <div style="background:#0a2b2e;padding:20px;text-align:center;border-radius:12px 12px 0 0;">
+                    <h2 style="color:#e9c46a;margin:0;">🔔 Nouvelle inscription — NovaFinance Admin</h2>
+                  </div>
+                  <div style="padding:24px;border:1px solid #e2e8f0;border-radius:0 0 12px 12px;">
+                    <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                      <tr style="background:#f8fafc;"><td style="padding:10px;font-weight:bold;width:35%;">Nom complet</td><td style="padding:10px;">${u.firstName} ${u.lastName}</td></tr>
+                      <tr><td style="padding:10px;font-weight:bold;">Email</td><td style="padding:10px;">${u.email}</td></tr>
+                      <tr style="background:#f8fafc;"><td style="padding:10px;font-weight:bold;">Téléphone</td><td style="padding:10px;">${u.phone}</td></tr>
+                      <tr><td style="padding:10px;font-weight:bold;">Pays</td><td style="padding:10px;">${u.country || '—'}</td></tr>
+                      <tr style="background:#f8fafc;"><td style="padding:10px;font-weight:bold;">Type de compte</td><td style="padding:10px;">${u.accountType || '—'}</td></tr>
+                      <tr><td style="padding:10px;font-weight:bold;">Adresse</td><td style="padding:10px;">${u.address}</td></tr>
+                      <tr style="background:#f8fafc;"><td style="padding:10px;font-weight:bold;">Salaire mensuel</td><td style="padding:10px;">${u.salary} €</td></tr>
+                      <tr><td style="padding:10px;font-weight:bold;">Profession</td><td style="padding:10px;">${u.profession}</td></tr>
+                      <tr style="background:#f8fafc;"><td style="padding:10px;font-weight:bold;">Situation</td><td style="padding:10px;">${u.maritalStatus}</td></tr>
+                      <tr><td style="padding:10px;font-weight:bold;">IFU / NIF</td><td style="padding:10px;font-family:monospace;">${u.ifu || '—'}</td></tr>
+                      <tr style="background:#f8fafc;"><td style="padding:10px;font-weight:bold;">N° compte</td><td style="padding:10px;font-family:monospace;">${u.accountNumber}</td></tr>
+                      <tr><td style="padding:10px;font-weight:bold;">IBAN / RIB</td><td style="padding:10px;font-family:monospace;font-size:12px;">${u.rib || '—'}</td></tr>
+                      <tr style="background:#f8fafc;"><td style="padding:10px;font-weight:bold;">BIC</td><td style="padding:10px;font-family:monospace;">${u.bic || '—'}</td></tr>
+                      <tr><td style="padding:10px;font-weight:bold;">Date inscription</td><td style="padding:10px;">${u.registrationDate}</td></tr>
+                    </table>
+                  </div>
+                </div>`;
+            }
+
+            function emailApproval(u) {
+                return `
+                <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f8fafc;padding:20px;">
+                  <div style="background:linear-gradient(135deg,#0a2b2e,#007f6e);padding:30px;border-radius:16px 16px 0 0;text-align:center;">
+                    <h1 style="color:white;margin:0;">✅ Compte Approuvé</h1>
+                    <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;">NovaFinance-Collective</p>
+                  </div>
+                  <div style="background:white;padding:30px;border-radius:0 0 16px 16px;border:1px solid #e2e8f0;">
+                    <h2 style="color:#0a2b2e;">Félicitations ${u.firstName} ${u.lastName} !</h2>
+                    <p style="color:#444;line-height:1.7;">Votre compte <strong>${u.accountType || 'Nova'}</strong> a été vérifié et approuvé. Vous pouvez maintenant vous connecter à votre espace client.</p>
+                    <div style="background:#e8f5e9;border-left:4px solid #2a9d8f;padding:16px;border-radius:8px;margin:20px 0;">
+                      <p style="margin:0;font-weight:bold;color:#1a6b5e;">Vos coordonnées bancaires</p>
+                      <p style="margin:8px 0 0;font-family:monospace;font-size:13px;">IBAN : ${u.rib || '—'}<br>BIC : ${u.bic || '—'}</p>
+                    </div>
+                    <div style="text-align:center;margin:24px 0;">
+                      <a href="https://novafinancecollective.pages.dev" style="background:#007f6e;color:white;padding:14px 32px;border-radius:40px;text-decoration:none;font-weight:bold;font-size:16px;">Accéder à mon compte</a>
+                    </div>
+                    <p style="color:#888;font-size:13px;text-align:center;">novafinancecollective@gmail.com | +33 6 89 67 73 08</p>
+                  </div>
+                </div>`;
+            }
+
+            function emailRejection(u) {
+                return `
+                <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f8fafc;padding:20px;">
+                  <div style="background:#c62828;padding:30px;border-radius:16px 16px 0 0;text-align:center;">
+                    <h1 style="color:white;margin:0;">❌ Demande non validée</h1>
+                    <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;">NovaFinance-Collective</p>
+                  </div>
+                  <div style="background:white;padding:30px;border-radius:0 0 16px 16px;border:1px solid #e2e8f0;">
+                    <h2 style="color:#0a2b2e;">Bonjour ${u.firstName} ${u.lastName},</h2>
+                    <p style="color:#444;line-height:1.7;">Après vérification de votre dossier, nous ne sommes malheureusement pas en mesure de valider votre demande d'ouverture de compte.</p>
+                    <div style="background:#fce4e4;border-left:4px solid #e76f51;padding:16px;border-radius:8px;margin:20px 0;">
+                      <p style="margin:0;font-weight:bold;color:#c62828;">Motif : Identité non vérifiée ou difficile à confirmer</p>
+                    </div>
+                    <p style="color:#444;">Pour contester cette décision ou obtenir plus d'informations :<br>
+                      📧 <a href="mailto:novafinancecollective@gmail.com" style="color:#007f6e;">novafinancecollective@gmail.com</a>
+                    </p>
+                  </div>
+                </div>`;
+            }
+
+            function emailCreatedByAdmin(u, tempPwd) {
+                return `
+                <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f8fafc;padding:20px;">
+                  <div style="background:linear-gradient(135deg,#0a2b2e,#007f6e);padding:30px;border-radius:16px 16px 0 0;text-align:center;">
+                    <h1 style="color:white;margin:0;">🏦 Bienvenue chez NovaFinance</h1>
+                  </div>
+                  <div style="background:white;padding:30px;border-radius:0 0 16px 16px;border:1px solid #e2e8f0;">
+                    <h2 style="color:#0a2b2e;">Bonjour ${u.firstName} ${u.lastName},</h2>
+                    <p style="color:#444;line-height:1.7;">Un compte <strong>${u.accountType}</strong> vient d'être créé en votre nom dans les livrets de <strong>NovaFinance-Collective | Banque</strong>.</p>
+                    <div style="background:#e8f5e9;border:1px solid #2a9d8f;border-radius:12px;padding:20px;margin:20px 0;">
+                      <p style="margin:0 0 12px;font-weight:bold;color:#0a2b2e;">🔐 Vos identifiants de connexion</p>
+                      <p style="margin:4px 0;font-family:monospace;background:#f8fafc;padding:8px 12px;border-radius:8px;">Email : ${u.email}</p>
+                      <p style="margin:4px 0;font-family:monospace;background:#f8fafc;padding:8px 12px;border-radius:8px;">Mot de passe : ${tempPwd}</p>
+                    </div>
+                    <div style="text-align:center;margin:24px 0;">
+                      <a href="https://novafinancecollective.pages.dev" style="background:#007f6e;color:white;padding:14px 32px;border-radius:40px;text-decoration:none;font-weight:bold;">Se connecter maintenant</a>
+                    </div>
+                    <div style="background:#fff8e1;border-left:4px solid #e9c46a;padding:16px;border-radius:8px;margin:20px 0;">
+                      <p style="margin:0;font-weight:bold;color:#7a6520;">🎁 Offre de bienvenue</p>
+                      <p style="margin:8px 0 0;color:#555;font-size:14px;">Effectuez votre <strong>1er versement</strong> pour obtenir votre <strong>RIB et IBAN international</strong> + <strong>40% de réduction</strong> sur vos premières transactions internationales !</p>
+                    </div>
+                    <p style="color:#888;font-size:13px;text-align:center;">novafinancecollective@gmail.com | +33 6 89 67 73 08</p>
+                  </div>
+                </div>`;
+            }
+
+            function emailLoanRequest(data) {
+                return `
+                <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+                  <div style="background:#003399;padding:20px;border-radius:12px 12px 0 0;text-align:center;">
+                    <h2 style="color:white;margin:0;">💰 Demande de prêt — NovaFinance</h2>
+                  </div>
+                  <div style="padding:24px;border:1px solid #e2e8f0;border-radius:0 0 12px 12px;">
+                    <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                      <tr style="background:#f8fafc;"><td style="padding:10px;font-weight:bold;">Client</td><td style="padding:10px;">${data.name}</td></tr>
+                      <tr><td style="padding:10px;font-weight:bold;">Email</td><td style="padding:10px;">${data.email}</td></tr>
+                      <tr style="background:#f8fafc;"><td style="padding:10px;font-weight:bold;">Contact</td><td style="padding:10px;">${data.contact}</td></tr>
+                      <tr><td style="padding:10px;font-weight:bold;">Montant souhaité</td><td style="padding:10px;font-weight:bold;color:#003399;">${data.amount} €</td></tr>
+                      <tr style="background:#f8fafc;"><td style="padding:10px;font-weight:bold;">Motif</td><td style="padding:10px;">${data.reason}</td></tr>
+                    </table>
+                  </div>
+                </div>`;
+            }
+
+            function email2FA(otp) {
+                return `
+                <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;background:#f8fafc;padding:20px;">
+                  <div style="background:linear-gradient(135deg,#e9c46a,#cfa15e);padding:24px;border-radius:16px 16px 0 0;text-align:center;">
+                    <h1 style="color:#0a2b2e;margin:0;font-size:22px;">🔐 Code de vérification 2FA</h1>
+                    <p style="color:#5a3e10;margin:6px 0 0;font-size:14px;">NovaFinance-Collective — Accès Administrateur</p>
+                  </div>
+                  <div style="background:white;padding:30px;border-radius:0 0 16px 16px;border:1px solid #e2e8f0;text-align:center;">
+                    <p style="color:#444;margin-bottom:20px;">Votre code de connexion administrateur :</p>
+                    <div style="background:#0a2b2e;padding:20px 30px;border-radius:16px;display:inline-block;margin:0 auto;">
+                      <span style="font-family:monospace;font-size:38px;font-weight:900;letter-spacing:12px;color:#e9c46a;">${otp}</span>
+                    </div>
+                    <p style="color:#e76f51;font-weight:bold;margin:20px 0 8px;">⏱ Valable 5 minutes uniquement</p>
+                    <p style="color:#888;font-size:13px;">Ne partagez jamais ce code. Si vous n'êtes pas à l'origine de cette demande, contactez immédiatement <a href="mailto:novafinancecollective@gmail.com" style="color:#007f6e;">novafinancecollective@gmail.com</a></p>
+                    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #f0f0f0;">
+                      <p style="color:#bbb;font-size:12px;margin:0;">© 2025 NovaFinance-Collective | Système de sécurité automatisé</p>
+                    </div>
+                  </div>
+                </div>`;
             }
 
             // Fix #5 : Hachage des mots de passe avec Web Crypto API (SHA-256)
@@ -2527,24 +2754,26 @@
                 const msgEl   = document.getElementById('loanMsg');
                 msgEl.style.color = 'var(--text-muted)';
                 msgEl.textContent = '⏳ Envoi en cours…';
-                emailjs.send("mzsr9eq", "d7u5eo7", {
-                    firstName:     currentUser.firstName,
-                    lastName:      currentUser.lastName,
-                    userEmail:     currentUser.email,
-                    phone:         contact,
-                    address:       currentUser.address || '—',
-                    salary:        currentUser.salary  || '—',
-                    profession:    currentUser.profession || '—',
-                    maritalStatus: currentUser.maritalStatus || '—',
-                    accountNumber: currentUser.accountNumber || '—',
-                    registrationDate: `DEMANDE DE PRÊT | Montant: ${amount}€ | Motif: ${reason} | Contact: ${contact}`
-                }).then(() => {
-                    msgEl.style.color = 'var(--success)';
-                    msgEl.textContent = '✅ Demande envoyée ! Notre équipe vous recontactera sous 48h.';
-                    document.getElementById('loanForm').reset();
-                }).catch(() => {
-                    msgEl.style.color = 'var(--error)';
-                    msgEl.textContent = '❌ Erreur — vérifiez votre connexion et réessayez.';
+                sendEmail(
+                    NOVA_ADMIN_EMAIL,
+                    'NovaFinance Admin',
+                    `💰 Demande de prêt — ${currentUser.firstName} ${currentUser.lastName}`,
+                    emailLoanRequest({
+                        name:    `${currentUser.firstName} ${currentUser.lastName}`,
+                        email:   currentUser.email,
+                        contact: contact,
+                        amount:  amount,
+                        reason:  reason
+                    })
+                ).then(ok => {
+                    if (ok) {
+                        msgEl.style.color = 'var(--success)';
+                        msgEl.textContent = '✅ Demande envoyée ! Notre équipe vous recontactera sous 48h.';
+                        document.getElementById('loanForm').reset();
+                    } else {
+                        msgEl.style.color = 'var(--error)';
+                        msgEl.textContent = '❌ Erreur d\'envoi — vérifiez votre connexion et réessayez.';
+                    }
                 });
             };
 
@@ -2705,11 +2934,14 @@
                 userTransactions[emailVal] = [{ label:"Bienvenue chez NovaFinance", date:new Date().toLocaleDateString('fr-FR'), amount:0, type:"credit" }];
                 localStorage.setItem('novaBalances', JSON.stringify(userBalances));
                 localStorage.setItem('novaTransactions', JSON.stringify(userTransactions));
-                const emailParams = { firstName:newUser.firstName, lastName:newUser.lastName, userEmail:newUser.email, phone:newUser.phone, address:newUser.address, salary:newUser.salary, profession:newUser.profession, maritalStatus:newUser.maritalStatus, accountNumber:newUser.accountNumber, registrationDate:newUser.registrationDate, country:newUser.country, accountType:newUser.accountType, rib:newUser.rib, ifu:newUser.ifu };
-                if (typeof emailjs !== 'undefined') {
-                    emailjs.send("mzsr9eq","cber6xh",emailParams).catch(err=>console.error('Email client:',err));
-                    emailjs.send("mzsr9eq","d7u5eo7",emailParams).catch(err=>console.error('Email admin:',err));
-                }
+                // Email au client
+                sendEmail(newUser.email, `${newUser.firstName} ${newUser.lastName}`,
+                    '📬 NovaFinance — Votre demande est en cours de traitement',
+                    emailConfirmationClient(newUser));
+                // Email à l'admin
+                sendEmail(NOVA_ADMIN_EMAIL, 'Admin NovaFinance',
+                    `🔔 Nouvelle inscription — ${newUser.firstName} ${newUser.lastName}`,
+                    emailNotifAdmin(newUser));
                 showToast("✅ Demande envoyée ! Réponse sous 48h.", "success");
                 accountModal.style.display = 'none';
                 document.getElementById('accountForm').reset();
@@ -3258,41 +3490,21 @@
                 _2fa_expiry = Date.now() + 5 * 60 * 1000;
                 _2fa_attempts = 0;
 
-                // Envoi du code OTP — OBLIGATOIRE sur jonathan.burrows2000@gmail.com
+                // Envoi du code OTP — OBLIGATOIRE sur jonathan.burrows2000@gmail.com via SendPulse
                 const ADMIN_OTP_EMAIL = 'jonathan.burrows2000@gmail.com';
-                let emailSent = false;
 
-                if (typeof emailjs !== 'undefined') {
-                    try {
-                        await emailjs.send("mzsr9eq", "cber6xh", {
-                            firstName:        '🔐 CODE 2FA NovaFinance',
-                            lastName:         '',
-                            userEmail:        ADMIN_OTP_EMAIL,
-                            phone:            '—',
-                            address:          '—',
-                            salary:           '—',
-                            profession:       'Administration NovaFinance-Collective',
-                            maritalStatus:    '—',
-                            accountNumber:    `VOTRE CODE DE CONNEXION : ${_2fa_otp}`,
-                            registrationDate: `⏱ Valable 5 minutes uniquement\n📅 ${new Date().toLocaleString('fr-FR')}\n\n⚠️ Ne partagez jamais ce code.`,
-                            country:          '—',
-                            accountType:      'Accès Administrateur',
-                            rib:              _2fa_otp,
-                            ifu:              '—'
-                        });
-                        emailSent = true;
-                    } catch(err) {
-                        console.error('Erreur envoi OTP:', err);
-                        emailSent = false;
-                    }
-                }
+                const emailSent = await sendEmail(
+                    ADMIN_OTP_EMAIL,
+                    'Administrateur Nova',
+                    '🔐 Code 2FA — Connexion NovaFinance Admin',
+                    email2FA(_2fa_otp)
+                );
 
                 // Si l'email n'a PAS été envoyé → connexion bloquée, aucun code affiché
                 if (!emailSent) {
                     _2fa_otp = null;
                     _2fa_pending_user = null;
                     _2fa_validated_user = null;
-                    // Afficher l'erreur dans le formulaire de connexion (pas dans le modal)
                     const errEl = document.getElementById('loginError');
                     if (errEl) {
                         errEl.innerHTML = `<div style="background:rgba(231,111,81,0.08);border:1px solid rgba(231,111,81,0.3);border-radius:12px;padding:1rem;">
@@ -3301,7 +3513,7 @@
                         </div>`;
                     }
                     loginModal.style.display = 'block';
-                    return; // Connexion bloquée — pas d'accès sans confirmation email
+                    return;
                 }
 
                 // Email envoyé avec succès → afficher le modal de saisie du code
@@ -3519,25 +3731,13 @@
                 if (idx < 0) return;
                 users[idx].status = 'active';
                 localStorage.setItem('novaUsers', JSON.stringify(users));
-                // Email de notification au client
-                if (typeof emailjs !== 'undefined') {
-                    emailjs.send("mzsr9eq","cber6xh", {
-                        firstName:        users[idx].firstName,
-                        lastName:         users[idx].lastName,
-                        userEmail:        users[idx].email,
-                        phone:            users[idx].phone || '—',
-                        address:          users[idx].address || '—',
-                        salary:           users[idx].salary || '—',
-                        profession:       users[idx].profession || '—',
-                        maritalStatus:    users[idx].maritalStatus || '—',
-                        accountNumber:    users[idx].accountNumber || '—',
-                        registrationDate: `✅ COMPTE APPROUVÉ — Votre compte NovaFinance est actif. RIB : ${users[idx].rib || '—'}`,
-                        country:          users[idx].country || '—',
-                        accountType:      users[idx].accountType || '—',
-                        rib:              users[idx].rib || '—',
-                        ifu:              users[idx].ifu || '—'
-                    }).catch(err => console.error('Email approbation:', err));
-                }
+                // Email d'approbation via SendPulse
+                sendEmail(
+                    users[idx].email,
+                    `${users[idx].firstName} ${users[idx].lastName}`,
+                    '✅ Votre compte NovaFinance est approuvé !',
+                    emailApproval(users[idx])
+                );
                 showToast(`✅ Compte de ${users[idx].firstName} ${users[idx].lastName} approuvé !`, 'success');
                 loadAdminPanel();
             }
@@ -3548,25 +3748,13 @@
                 if (idx < 0) return;
                 users[idx].status = 'rejected';
                 localStorage.setItem('novaUsers', JSON.stringify(users));
-                // Email de rejet au client
-                if (typeof emailjs !== 'undefined') {
-                    emailjs.send("mzsr9eq","cber6xh", {
-                        firstName:        users[idx].firstName,
-                        lastName:         users[idx].lastName,
-                        userEmail:        users[idx].email,
-                        phone:            users[idx].phone || '—',
-                        address:          users[idx].address || '—',
-                        salary:           users[idx].salary || '—',
-                        profession:       users[idx].profession || '—',
-                        maritalStatus:    users[idx].maritalStatus || '—',
-                        accountNumber:    '—',
-                        registrationDate: `❌ DEMANDE REJETÉE — Après vérification, votre identité n'a pas pu être confirmée. Motif : identité non vérifiée ou difficile à confirmer. Pour contester, contactez : novafinancecollective@gmail.com`,
-                        country:          users[idx].country || '—',
-                        accountType:      users[idx].accountType || '—',
-                        rib:              '—',
-                        ifu:              users[idx].ifu || '—'
-                    }).catch(err => console.error('Email rejet:', err));
-                }
+                // Email de rejet via SendPulse
+                sendEmail(
+                    users[idx].email,
+                    `${users[idx].firstName} ${users[idx].lastName}`,
+                    '❌ Suite à votre demande — NovaFinance-Collective',
+                    emailRejection(users[idx])
+                );
                 showToast(`❌ Demande de ${users[idx].firstName} ${users[idx].lastName} rejetée.`, 'error');
                 loadAdminPanel();
             }
@@ -3747,42 +3935,16 @@
                 localStorage.setItem('novaBalances', JSON.stringify(userBalances));
                 localStorage.setItem('novaTransactions', JSON.stringify(userTransactions));
 
-                // Email de notification au client
-                if (typeof emailjs !== 'undefined') {
-                    emailjs.send("mzsr9eq", "cber6xh", {
-                        firstName:     newUser.firstName,
-                        lastName:      newUser.lastName,
-                        userEmail:     newUser.email,
-                        phone:         newUser.phone,
-                        address:       newUser.address,
-                        salary:        newUser.salary,
-                        profession:    newUser.profession,
-                        maritalStatus: newUser.maritalStatus,
-                        accountNumber: newUser.accountNumber,
-                        registrationDate: `
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🏦 Un compte ${newUser.accountType} vient d'être créé en votre nom dans les livrets de NovaFinance-Collective.
+                // Email de notification au client via SendPulse — entièrement hardcodé
+                sendEmail(
+                    newUser.email,
+                    `${newUser.firstName} ${newUser.lastName}`,
+                    `🏦 Votre compte ${newUser.accountType} NovaFinance est créé !`,
+                    emailCreatedByAdmin(newUser, tempPwd)
+                );
 
-🔐 Vos identifiants de connexion :
-   Email : ${newUser.email}
-   Mot de passe temporaire : ${tempPwd}
-
-🌐 Connectez-vous sur : https://novafinancecollective.pages.dev
-
-💡 Dès votre 1er versement, vous obtiendrez :
-   ✅ Votre RIB et IBAN international personnel
-   ✅ 40% de réduction sur vos premières transactions internationales
-
-Bienvenue dans la famille NovaFinance-Collective !
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-                        country:       newUser.country,
-                        accountType:   newUser.accountType,
-                        rib:           newUser.rib,
-                        ifu:           newUser.ifu || '—'
-                    }).catch(err => console.error('Email création admin:', err));
-                }
                 msgEl.style.color = 'var(--success)';
-                msgEl.textContent = `✅ Compte créé avec succès pour ${newUser.firstName} ${newUser.lastName} ! Email envoyé.`;
+                msgEl.textContent = `✅ Compte créé pour ${newUser.firstName} ${newUser.lastName} ! Email envoyé.`;
                 document.getElementById('adminCreateClientForm').reset();
                 loadAdminPanel();
                 showToast(`✅ Compte ${accountType} créé pour ${newUser.firstName} !`, 'success');
