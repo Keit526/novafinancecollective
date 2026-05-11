@@ -2224,67 +2224,38 @@
 
         <script>
             // ═══════════════════════════════════════════════
-            // MOTEUR EMAIL — SendPulse API (100% hardcodé)
+            // MOTEUR EMAIL — Brevo API (100% hardcodé)
             // Clé API directement dans le code — aucun template externe
-            // Tous les emails partent de ce système vers les destinataires
+            // API simple : une seule requête, pas d'OAuth
             // ═══════════════════════════════════════════════
-            const SP_API_KEY      = 'sp_apikey_89c0d4e37e3c6fe603b71b3399edc23370a72409a82cdd5ede1b41acd8036c88';
-            const NOVA_FROM_EMAIL = 'novafinancecollective@gmail.com';
-            const NOVA_FROM_NAME  = 'NovaFinance-Collective';
+            const BREVO_API_KEY    = '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';
+            const BREVO_API_URL    = 'https://api.brevo.com/v3/smtp/email';
+            const NOVA_FROM_EMAIL  = 'novafinancecollective@gmail.com';
+            const NOVA_FROM_NAME   = 'NovaFinance-Collective';
             const NOVA_ADMIN_EMAIL = 'novafinancecollective@gmail.com';
-
-            // Cache du token OAuth SendPulse
-            let _spToken = null;
-            let _spTokenExpiry = 0;
-
-            async function getSPToken() {
-                if (_spToken && Date.now() < _spTokenExpiry) return _spToken;
-                try {
-                    const res = await fetch('https://api.sendpulse.com/oauth/access_token', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            grant_type:    'client_credentials',
-                            client_id:     SP_API_KEY,
-                            client_secret: SP_API_KEY
-                        })
-                    });
-                    const data = await res.json();
-                    if (data.access_token) {
-                        _spToken = data.access_token;
-                        _spTokenExpiry = Date.now() + ((data.expires_in || 3600) - 120) * 1000;
-                        return _spToken;
-                    }
-                } catch(err) { console.error('SP token error:', err); }
-                return null;
-            }
 
             async function sendEmail(toEmail, toName, subject, htmlBody) {
                 try {
-                    const token = await getSPToken();
-                    if (!token) {
-                        console.error('SendPulse: impossible d\'obtenir le token');
-                        return false;
-                    }
-                    const res = await fetch('https://api.sendpulse.com/smtp/emails', {
+                    const res = await fetch(BREVO_API_URL, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
+                            'accept':       'application/json',
+                            'api-key':      BREVO_API_KEY,
+                            'content-type': 'application/json'
                         },
                         body: JSON.stringify({
-                            email: {
-                                html:    htmlBody,
-                                text:    subject,
-                                subject: subject,
-                                from:    { name: NOVA_FROM_NAME, email: NOVA_FROM_EMAIL },
-                                to:      [{ name: toName || toEmail, email: toEmail }]
-                            }
+                            sender:      { name: NOVA_FROM_NAME, email: NOVA_FROM_EMAIL },
+                            to:          [{ email: toEmail, name: toName || toEmail }],
+                            subject:     subject,
+                            htmlContent: htmlBody
                         })
                     });
-                    const result = await res.json();
-                    if (res.ok) { console.log('✅ Email envoyé à', toEmail); return true; }
-                    console.error('SendPulse erreur:', result);
+                    if (res.ok) {
+                        console.log('✅ Brevo — Email envoyé à', toEmail);
+                        return true;
+                    }
+                    const err = await res.json().catch(() => ({}));
+                    console.error('Brevo erreur:', res.status, err);
                     return false;
                 } catch(err) {
                     console.error('sendEmail error:', err);
@@ -3684,7 +3655,7 @@
                 if (idx < 0) return;
                 users[idx].status = 'active';
                 localStorage.setItem('novaUsers', JSON.stringify(users));
-                // Email d'approbation via SendPulse
+                // Email d'approbation via Brevo
                 sendEmail(
                     users[idx].email,
                     `${users[idx].firstName} ${users[idx].lastName}`,
@@ -3701,7 +3672,7 @@
                 if (idx < 0) return;
                 users[idx].status = 'rejected';
                 localStorage.setItem('novaUsers', JSON.stringify(users));
-                // Email de rejet via SendPulse
+                // Email de rejet via Brevo
                 sendEmail(
                     users[idx].email,
                     `${users[idx].firstName} ${users[idx].lastName}`,
@@ -3888,7 +3859,7 @@
                 localStorage.setItem('novaBalances', JSON.stringify(userBalances));
                 localStorage.setItem('novaTransactions', JSON.stringify(userTransactions));
 
-                // Email de notification au client via SendPulse — entièrement hardcodé
+                // Email de notification au client via Brevo — entièrement hardcodé
                 sendEmail(
                     newUser.email,
                     `${newUser.firstName} ${newUser.lastName}`,
