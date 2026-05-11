@@ -3407,7 +3407,7 @@
 
                 msgEl.style.color = 'var(--text-muted)';
                 msgEl.textContent = '⏳ Préparation du paiement…';
-
+                closeDepositModal();
                 try {
                     // Appel à la Vercel Function sécurisée pour créer la transaction
                     const res = await fetch(VERCEL_API_URL, {
@@ -3437,6 +3437,7 @@
                             if (resp.reason === FedaPay.DIALOG_DISMISSED) {
                                 msgEl.style.color = 'var(--text-muted)';
                                 msgEl.textContent = 'Paiement annulé.';
+                                openDepositModal();
                                 return;
                             }
                             if (resp.transaction && resp.transaction.status === 'approved') {
