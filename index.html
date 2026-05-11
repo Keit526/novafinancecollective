@@ -3414,7 +3414,7 @@
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            amount:      parseInt(amount * 100), // en centimes
+                            amount:      Math.round(amount * 100), // en centimes
                             currency:    'EUR',
                             description: `Dépôt compte Nova — ${currentUser.firstName} ${currentUser.lastName}`,
                             customer: {
