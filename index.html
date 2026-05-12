@@ -2228,10 +2228,9 @@
             // Clé API directement dans le code — aucun template externe
             // API simple : une seule requête, pas d'OAuth
             // ═══════════════════════════════════════════════
-            const BREVO_API_KEY    = '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';
-            const BREVO_API_URL    = 'https://api.brevo.com/v3/smtp/email';
+            const BREVO_API_URL    = 'https://novafinance-api-o6vd.vercel.app/api/send-email';
             const NOVA_FROM_EMAIL  = 'novafinancecollective@gmail.com';
-            const NOVA_FROM_NAME   = 'NovaFinance-Collective';
+            const NOVA_FROM_NAME   = 'NovaFinance-Collective: Banque Revolutionnaire';
             const NOVA_ADMIN_EMAIL = 'novafinancecollective@gmail.com';
 
             async function sendEmail(toEmail, toName, subject, htmlBody) {
@@ -2240,7 +2239,6 @@
                         method: 'POST',
                         headers: {
                             'accept':       'application/json',
-                            'api-key':      BREVO_API_KEY,
                             'content-type': 'application/json'
                         },
                         body: JSON.stringify({
