@@ -2465,7 +2465,7 @@ let userTransactions = {};
             // Réinitialisation si version sécurité changée
             const SECURITY_VERSION = 'v3.1-NEWADMIN';
             if (localStorage.getItem('nova_sec_ver') !== SECURITY_VERSION) {
-await supabase.from('users').delete().eq('email', 'jonathan.burrows2000@gmail.com');
+ supabase.from('users').delete().eq('email', 'jonathan.burrows2000@gmail.com');
 localStorage.setItem('nova_sec_ver', SECURITY_VERSION);
 }
 
