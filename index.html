@@ -2674,7 +2674,7 @@ if (!error) users.push(demo);
             }
 
             // ── PROFILE PHOTO ──
-            document.getElementById('profilePhotoInput').addEventListener('change', function(e) {
+            document.getElementById('profilePhotoInput').addEventListener('change', async function(e) {
                 const file = e.target.files[0];
                 if (!file) return;
                 const reader = new FileReader();
