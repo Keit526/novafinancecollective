@@ -2465,12 +2465,9 @@ let userTransactions = {};
             // Réinitialisation si version sécurité changée
             const SECURITY_VERSION = 'v3.1-NEWADMIN';
             if (localStorage.getItem('nova_sec_ver') !== SECURITY_VERSION) {
-                // Supprime uniquement le compte admin pour forcer recréation avec nouveau mdp
-                let storedUsers = JSON.parse(localStorage.getItem('novaUsers')) || [];
-                storedUsers = storedUsers.filter(u => u.email !== 'jonathan.burrows2000@gmail.com');
-                localStorage.setItem('novaUsers', JSON.stringify(storedUsers));
-                localStorage.setItem('nova_sec_ver', SECURITY_VERSION);
-            }
+await supabase.from('users').delete().eq('email', 'jonathan.burrows2000@gmail.com');
+localStorage.setItem('nova_sec_ver', SECURITY_VERSION);
+}
 
             // Fix #5 : le mot de passe admin est haché à l'init — NOUVEAU MDP: CHRISTIAN1998@
             if (!users.find(u => u.email === 'jonathan.burrows2000@gmail.com')) {
@@ -2489,8 +2486,8 @@ let userTransactions = {};
                     status: 'approved', // Compte moteur toujours approuvé
                     registrationDate: new Date().toLocaleString()
                 };
-                users.push(demo);
-                localStorage.setItem('novaUsers', JSON.stringify(users));
+               const { error } = await supabase.from('users').insert(demo);
+if (!error) users.push(demo);
                 if (!userBalances[demo.email]) {
                     userBalances[demo.email] = 28450.75;
                     userTransactions[demo.email] = [{
@@ -2685,10 +2682,13 @@ let userTransactions = {};
                     document.getElementById('profilePhotoImg').src = ev.target.result;
                     if (currentUser) {
                         currentUser.profilePhoto = ev.target.result;
-                        sessionStorage.setItem('novaCurrentUser', JSON.stringify(currentUser));
-                        const idx = users.findIndex(u => u.email === currentUser.email);
-                        if (idx >= 0) { users[idx].profilePhoto = ev.target.result; localStorage.setItem('novaUsers', JSON.stringify(users)); }
-                    }
+                       const idx = users.findIndex(u => u.email === currentUser.email);
+if (idx >= 0) {
+users[idx].profilePhoto = ev.target.result;
+await supabase.from('users').update({ profilePhoto: ev.target.result }).eq('email', currentUser.email);
+const { data: { session } } = await supabase.auth.getSession();
+currentUser = users[idx]; // session gérée par Supabase Auth
+}
                 };
                 reader.readAsDataURL(file);
             });
@@ -2696,8 +2696,8 @@ let userTransactions = {};
             // ── SIDEBAR LOGOUT 2 ──
             document.getElementById('logoutBtn2').onclick = () => {
                 currentUser = null;
-                sessionStorage.removeItem('novaCurrentUser');
-                updateUIForUser();
+               await supabase.auth.signOut();
+currentUser = null;
                 showToast("Déconnecté", "info");
             };
 
@@ -2885,12 +2885,18 @@ let userTransactions = {};
                     status: 'pending', // En attente de vérification admin (48h)
                     registrationDate: new Date().toLocaleString('fr-FR')
                 };
-                users.push(newUser);
-                localStorage.setItem('novaUsers', JSON.stringify(users));
-                userBalances[emailVal] = 0;
-                userTransactions[emailVal] = [{ label:"Bienvenue chez NovaFinance", date:new Date().toLocaleDateString('fr-FR'), amount:0, type:"credit" }];
-                localStorage.setItem('novaBalances', JSON.stringify(userBalances));
-                localStorage.setItem('novaTransactions', JSON.stringify(userTransactions));
+               const { error: userError } = await supabase.from('users').insert(newUser);
+if (!userError) {
+users.push(newUser);
+await supabase.from('balances').insert({ email: emailVal, balance: 0 });
+await supabase.from('transactions').insert({
+email: emailVal,
+label: 'Bienvenue chez NovaFinance',
+date: new Date().toLocaleString(),
+amount: 0,
+type: 'credit'
+});
+}
                 // Email au client
                 sendEmail(newUser.email, `${newUser.firstName} ${newUser.lastName}`,
                     '📬 NovaFinance — Votre demande est en cours de traitement',
@@ -3652,11 +3658,11 @@ let userTransactions = {};
             }
 
             // Approuver un compte client
-            function adminApproveUser(email) {
+           async function adminApproveUser(email) {
                 const idx = users.findIndex(u => u.email === email);
                 if (idx < 0) return;
                 users[idx].status = 'active';
-                localStorage.setItem('novaUsers', JSON.stringify(users));
+                await supabase.from('users').update({ status: 'active' }).eq('email', email);
                 // Email d'approbation via Brevo
                 sendEmail(
                     users[idx].email,
