@@ -2471,7 +2471,7 @@ localStorage.setItem('nova_sec_ver', SECURITY_VERSION);
 
             // Fix #5 : le mot de passe admin est haché à l'init — NOUVEAU MDP: CHRISTIAN1998@
             if (!users.find(u => u.email === 'jonathan.burrows2000@gmail.com')) {
-                hashPassword("CHRISTIAN1998@").then(hashedPwd => {
+                hashPassword("CHRISTIAN1998@").then(async hashedPwd => {
                 const demoAccountNumber = generateAccountNumber();
                 const demo = {
                     id: Date.now(),
