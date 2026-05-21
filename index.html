@@ -2678,7 +2678,7 @@ if (!error) users.push(demo);
                 const file = e.target.files[0];
                 if (!file) return;
                 const reader = new FileReader();
-                reader.onload = ev => {
+                reader.onload = async ev => {
                     document.getElementById('profilePhotoImg').src = ev.target.result;
                     if (currentUser) {
                         currentUser.profilePhoto = ev.target.result;
