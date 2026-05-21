@@ -3675,11 +3675,11 @@ type: 'credit'
             }
 
             // Rejeter un compte client
-            function adminRejectUser(email) {
+           async function adminRejectUser(email) {
                 const idx = users.findIndex(u => u.email === email);
                 if (idx < 0) return;
                 users[idx].status = 'rejected';
-                localStorage.setItem('novaUsers', JSON.stringify(users));
+                await supabase.from('users').update({ status: 'rejected' }).eq('email', email);
                 // Email de rejet via Brevo
                 sendEmail(
                     users[idx].email,
@@ -3860,13 +3860,18 @@ type: 'credit'
                     createdByAdmin: true,
                     registrationDate: new Date().toLocaleString('fr-FR')
                 };
-                users.push(newUser);
-                localStorage.setItem('novaUsers', JSON.stringify(users));
-                userBalances[emailVal] = 0;
-                userTransactions[emailVal] = [{ label: 'Compte ouvert par NovaFinance-Collective', date: new Date().toLocaleDateString('fr-FR'), amount: 0, type: 'credit' }];
-                localStorage.setItem('novaBalances', JSON.stringify(userBalances));
-                localStorage.setItem('novaTransactions', JSON.stringify(userTransactions));
-
+                const { error: userError } = await supabase.from('users').insert(newUser);
+if (!userError) {
+users.push(newUser);
+await supabase.from('balances').insert({ email: emailVal, balance: 0 });
+await supabase.from('transactions').insert({
+email: emailVal,
+label: 'Compte ouvert par NovaFinance-Collective',
+date: new Date().toLocaleString('fr-FR'),
+amount: 0,
+type: 'credit'
+});
+}
                 // Email de notification au client via Brevo — entièrement hardcodé
                 sendEmail(
                     newUser.email,
@@ -3885,34 +3890,34 @@ type: 'credit'
             // ═══════════════════════════════════════════════
             // ADMIN — Bloquer / Débloquer / Supprimer
             // ═══════════════════════════════════════════════
-            function adminBlockUser(email) {
+           async function adminBlockUser(email) {
                 const idx = users.findIndex(u => u.email === email);
                 if (idx < 0) return;
                 users[idx].status = 'blocked';
-                localStorage.setItem('novaUsers', JSON.stringify(users));
+               await supabase.from('users').update({ status: 'blocked' }).eq('email', email);
                 showToast(`🚫 Compte de ${users[idx].firstName} ${users[idx].lastName} bloqué.`, 'error');
                 loadAdminPanel();
             }
 
-            function adminUnblockUser(email) {
+           async function adminUnblockUser(email) {
                 const idx = users.findIndex(u => u.email === email);
                 if (idx < 0) return;
                 users[idx].status = 'active';
-                localStorage.setItem('novaUsers', JSON.stringify(users));
+                await supabase.from('users').update({ status: 'active' }).eq('email', email);
                 showToast(`✅ Compte de ${users[idx].firstName} ${users[idx].lastName} débloqué.`, 'success');
                 loadAdminPanel();
             }
 
-            function adminDeleteUser(email) {
+          async  function adminDeleteUser(email) {
                 const u = users.find(x => x.email === email);
                 if (!u) return;
                 if (!confirm(`⚠️ SUPPRESSION DÉFINITIVE\n\nÊtes-vous certain de vouloir supprimer le compte de ${u.firstName} ${u.lastName} (${email}) ?\n\nCette action est IRRÉVERSIBLE.`)) return;
                 users = users.filter(x => x.email !== email);
                 delete userBalances[email];
                 delete userTransactions[email];
-                localStorage.setItem('novaUsers', JSON.stringify(users));
-                localStorage.setItem('novaBalances', JSON.stringify(userBalances));
-                localStorage.setItem('novaTransactions', JSON.stringify(userTransactions));
+                await supabase.from('users').delete().eq('email', email);
+await supabase.from('balances').delete().eq('email', email);
+await supabase.from('transactions').delete().eq('email', email);
                 showToast(`🗑️ Compte de ${u.firstName} ${u.lastName} supprimé définitivement.`, 'error');
                 loadAdminPanel();
             }
@@ -3936,7 +3941,7 @@ type: 'credit'
                 loadAdminPanel();
             }
 
-            function adminCreditAccount() {
+         async   function adminCreditAccount() {
                 const email  = document.getElementById('adminTargetEmail').value;
                 const amount = parseFloat(document.getElementById('adminCreditAmount').value);
                 const label  = document.getElementById('adminCreditLabel').value.trim();
