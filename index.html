@@ -2419,7 +2419,8 @@
             // Stockage
             const SUPABASE_URL = 'https://clsigroypoaomwlalcpa.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNsc2lncm95cG9hb213bGFsY3BhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzMTY1NzksImV4cCI6MjA5NDg5MjU3OX0.akPuwrwcMLfNi1Qn_Qn6HMVzbVRI4BYTue4a8Smfx2A';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const { createClient } = window.supabase;          
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let users = [];
 let currentUser = null;
 let userBalances = {};
