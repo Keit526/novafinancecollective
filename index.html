@@ -2694,7 +2694,7 @@ if (!error) users.push(demo);
 });
 
             // ── SIDEBAR LOGOUT 2 ──
-            document.getElementById('logoutBtn2').onclick = () => {
+            document.getElementById('logoutBtn2').onclick = async () => {
                 currentUser = null;
                await supabase.auth.signOut();
 currentUser = null;
