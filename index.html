@@ -2674,24 +2674,24 @@ if (!error) users.push(demo);
             }
 
             // ── PROFILE PHOTO ──
-            document.getElementById('profilePhotoInput').addEventListener('change', async function(e) {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = async ev => {
-                    document.getElementById('profilePhotoImg').src = ev.target.result;
-                    if (currentUser) {
-                        currentUser.profilePhoto = ev.target.result;
-                       const idx = users.findIndex(u => u.email === currentUser.email);
-if (idx >= 0) {
-users[idx].profilePhoto = ev.target.result;
-await supabase.from('users').update({ profilePhoto: ev.target.result }).eq('email', currentUser.email);
-const { data: { session } } = await supabase.auth.getSession();
-currentUser = users[idx]; // session gérée par Supabase Auth
-}
-                };
-                reader.readAsDataURL(file);
-            });
+          document.getElementById('profilePhotoInput').addEventListener('change', async function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async ev => {
+        document.getElementById('profilePhotoImg').src = ev.target.result;
+        if (currentUser) {
+            currentUser.profilePhoto = ev.target.result;
+            const idx = users.findIndex(u => u.email === currentUser.email);
+            if (idx >= 0) {
+                users[idx].profilePhoto = ev.target.result;
+                await supabase.from('users').update({ profilePhoto: ev.target.result }).eq('email', currentUser.email);
+                currentUser = users[idx];
+            }
+        }
+    };
+    reader.readAsDataURL(file);
+});
 
             // ── SIDEBAR LOGOUT 2 ──
             document.getElementById('logoutBtn2').onclick = () => {
