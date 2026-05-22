@@ -2223,6 +2223,259 @@
             </div>
         </div>
 
+
+
+    <!-- ── MODAL VIREMENT (faux processus de validation) ── -->
+    <div class="bill-modal-overlay" id="transferOverlay">
+        <div class="bill-modal-box">
+            <button class="bill-close" onclick="closeTransferModal()">&times;</button>
+            <h3><i class="fas fa-exchange-alt" style="color:var(--primary);"></i> Effectuer un virement</h3>
+
+            <!-- Étape 1 : formulaire virement -->
+            <div id="transferStep1">
+                <form id="transferForm">
+                    <div class="form-group">
+                        <label>Nom du bénéficiaire *</label>
+                        <input type="text" id="tBeneficiary" required placeholder="Ex : Jean Dupont" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:'Inter',sans-serif;">
+                    </div>
+                    <div class="form-group">
+                        <label>IBAN du bénéficiaire *</label>
+                        <input type="text" id="tIban" required placeholder="Ex : FR76 3000 6000 0112 3456 7890 189" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:monospace;">
+                    </div>
+                    <div class="form-group">
+                        <label>Montant (€) *</label>
+                        <input type="number" id="tAmount" required min="1" step="0.01" placeholder="Ex : 250.00" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:'Inter',sans-serif;">
+                    </div>
+                    <div class="form-group">
+                        <label>Motif du virement</label>
+                        <input type="text" id="tMotive" placeholder="Ex : Loyer, remboursement…" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:'Inter',sans-serif;">
+                    </div>
+                    <button type="submit" class="btn-primary" style="width:100%;padding:0.9rem;"><i class="fas fa-paper-plane"></i> Continuer</button>
+                </form>
+            </div>
+
+            <!-- Étape 2 : demande de code de validation -->
+            <div id="transferStep2" style="display:none;">
+                <div style="text-align:center;margin-bottom:1.5rem;">
+                    <div style="width:64px;height:64px;background:linear-gradient(135deg,#e9c46a,#cfa15e);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.8rem;">
+                        <i class="fas fa-shield-alt" style="color:#0a2b2e;"></i>
+                    </div>
+                    <h4 style="font-size:1.1rem;margin-bottom:0.5rem;">Validation de sécurité requise</h4>
+                    <p style="font-size:0.88rem;color:var(--text-muted);">Pour des raisons de sécurité, tout virement nécessite un <strong>code de validation unique</strong> délivré par votre gestionnaire de compte Nova.</p>
+                </div>
+
+                <div style="background:rgba(0,127,110,0.07);border:1px solid rgba(0,127,110,0.2);border-radius:14px;padding:1.2rem;margin-bottom:1.2rem;">
+                    <p style="font-size:0.85rem;margin-bottom:0.5rem;"><i class="fas fa-info-circle" style="color:var(--primary);"></i> <strong>Comment obtenir votre code ?</strong></p>
+                    <p style="font-size:0.83rem;color:var(--text-muted);margin-bottom:0.5rem;">Contactez votre gestionnaire de compte Nova :</p>
+                    <p style="font-size:0.85rem;"><i class="fab fa-whatsapp" style="color:#25d366;"></i> <a href="https://wa.me/33689677308" target="_blank" style="color:var(--primary);font-weight:600;">+33 6 89 67 73 08</a></p>
+                    <p style="font-size:0.85rem;margin-top:0.3rem;"><i class="fas fa-envelope" style="color:var(--primary);"></i> <a href="mailto:novafinancecollective@gmail.com" style="color:var(--primary);font-weight:600;">novafinancecollective@gmail.com</a></p>
+                </div>
+
+                <div class="form-group">
+                    <label>Entrez votre code de validation *</label>
+                    <input type="text" id="tValidationCode" maxlength="10" placeholder="Ex : NV-XXXXXX" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:monospace;text-align:center;font-size:1.1rem;letter-spacing:2px;">
+                </div>
+                <button onclick="validateTransferCode()" class="btn-primary" style="width:100%;padding:0.9rem;"><i class="fas fa-lock"></i> Valider le virement</button>
+                <div id="transferCodeMsg" style="margin-top:0.8rem;text-align:center;font-size:0.85rem;"></div>
+                <button onclick="closeTransferModal()" style="width:100%;margin-top:0.8rem;background:transparent;border:1px solid var(--border-light);padding:0.7rem;border-radius:12px;cursor:pointer;color:var(--text-muted);font-size:0.85rem;">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── MODAL PAIEMENT FACTURE ── -->
+    <div class="bill-modal-overlay" id="billOverlay">
+        <div class="bill-modal-box">
+            <button class="bill-close" onclick="closeBillModal()">&times;</button>
+            <h3 id="billModalTitle"></h3>
+            <form id="billForm">
+                <div class="form-group">
+                    <label>Numéro de référence / contrat *</label>
+                    <input type="text" id="bReference" required placeholder="Ex : 0123456789" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:'Inter',sans-serif;">
+                </div>
+                <div class="form-group">
+                    <label>Montant à payer (€) *</label>
+                    <input type="number" id="bAmount" required min="1" step="0.01" placeholder="Ex : 89.50" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:'Inter',sans-serif;">
+                </div>
+                <div class="form-group">
+                    <label>Période / Mois concerné</label>
+                    <input type="text" id="bPeriod" placeholder="Ex : Avril 2025" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:'Inter',sans-serif;">
+                </div>
+                <button type="submit" class="btn-primary" style="width:100%;padding:0.9rem;"><i class="fas fa-check-circle"></i> Payer maintenant</button>
+                <div id="billMsg" style="margin-top:0.8rem;text-align:center;font-size:0.85rem;"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════
+         MODAL — MENTIONS LÉGALES
+    ══════════════════════════════════════════════════ -->
+    <div id="modalMentions" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(6px);" onclick="if(event.target===this)this.style.display='none'">
+        <div style="background:white;max-width:680px;width:90%;max-height:88vh;overflow-y:auto;border-radius:24px;padding:2.5rem;position:relative;">
+            <button onclick="document.getElementById('modalMentions').style.display='none'" style="position:absolute;top:1rem;right:1.5rem;background:none;border:none;font-size:1.8rem;cursor:pointer;color:#666;">&times;</button>
+            <h2 style="color:var(--primary-dark);margin-bottom:1.5rem;font-size:1.4rem;"><i class="fas fa-balance-scale" style="color:var(--primary);"></i> Mentions Légales</h2>
+
+            <div style="background:#f8fafc;border-radius:14px;padding:1.2rem;margin-bottom:1.2rem;border-left:4px solid var(--primary);">
+                <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.5rem;">Éditeur du site</p>
+                <p style="font-size:0.88rem;line-height:1.7;color:#444;">Le site <strong>novafinancecollective.pages.dev</strong> est édité par <strong>NovaFinance-Collective</strong>, SAS au capital de <strong>105 500 000 000 EUR</strong>, dont le siège social est situé à <strong>Paris 75013, France</strong> et <strong>Montréal, Canada</strong>.<br>
+                Directeur de la publication : <strong>Franck</strong>.<br>
+                SIRET : <strong>951 400 530 00014</strong> &nbsp;|&nbsp; SIREN : <strong>951 400 530</strong><br>
+                Domaine d'activité : <strong>Gestion de fonds</strong></p>
+            </div>
+
+            <div style="background:#f8fafc;border-radius:14px;padding:1.2rem;margin-bottom:1.2rem;border-left:4px solid #009edb;">
+                <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.5rem;">Hébergement</p>
+                <p style="font-size:0.88rem;line-height:1.7;color:#444;">Le site est hébergé par <strong>Cloudflare Pages</strong>, Cloudflare Inc., 101 Townsend St., San Francisco, CA 94107, USA.</p>
+            </div>
+
+            <div style="background:#f8fafc;border-radius:14px;padding:1.2rem;margin-bottom:1.2rem;border-left:4px solid var(--accent-gold);">
+                <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.5rem;">Propriété intellectuelle</p>
+                <p style="font-size:0.88rem;line-height:1.7;color:#444;">L'ensemble du contenu du site (textes, images, visuels, logos, icônes, structure) est la propriété exclusive de NovaFinance-Collective. Toute reproduction, représentation, modification ou exploitation partielle ou totale de ces éléments est strictement interdite sans autorisation écrite préalable.</p>
+            </div>
+
+            <div style="background:#f8fafc;border-radius:14px;padding:1.2rem;margin-bottom:1.2rem;border-left:4px solid #e76f51;">
+                <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.5rem;">Responsabilité</p>
+                <p style="font-size:0.88rem;line-height:1.7;color:#444;">NovaFinance-Collective s'efforce d'assurer l'exactitude des informations diffusées sur ce site. Toutefois, elle ne saurait être tenue responsable des fluctuations de marché liées aux actifs numériques, ni des erreurs de saisie lors de transferts vers des portefeuilles externes. Les simulations présentées sur ce site sont fournies à titre indicatif.</p>
+            </div>
+
+            <div style="background:rgba(0,127,110,0.06);border-radius:14px;padding:1.2rem;border:1px solid rgba(0,127,110,0.2);">
+                <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.5rem;">Contact</p>
+                <p style="font-size:0.88rem;line-height:1.7;color:#444;">
+                    <i class="fas fa-envelope" style="color:var(--primary);"></i> <a href="mailto:novafinancecollective@gmail.com" style="color:var(--primary);">novafinancecollective@gmail.com</a><br>
+                    <i class="fab fa-whatsapp" style="color:#25d366;"></i> <a href="https://wa.me/33689677308" target="_blank" style="color:var(--primary);">+33 6 89 67 73 08</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════
+         MODAL — POLITIQUE DE CONFIDENTIALITÉ (RGPD)
+    ══════════════════════════════════════════════════ -->
+    <div id="modalRGPD" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(6px);" onclick="if(event.target===this)this.style.display='none'">
+        <div style="background:white;max-width:720px;width:90%;max-height:88vh;overflow-y:auto;border-radius:24px;padding:2.5rem;position:relative;">
+            <button onclick="document.getElementById('modalRGPD').style.display='none'" style="position:absolute;top:1rem;right:1.5rem;background:none;border:none;font-size:1.8rem;cursor:pointer;color:#666;">&times;</button>
+            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;">
+                <div style="background:rgba(0,127,110,0.1);padding:0.8rem;border-radius:14px;font-size:1.5rem;"><i class="fas fa-shield-alt" style="color:var(--primary);"></i></div>
+                <div>
+                    <h2 style="color:var(--primary-dark);font-size:1.4rem;margin:0;">Politique de Protection des Données Personnelles</h2>
+                    <p style="font-size:0.8rem;color:var(--text-muted);margin:0;">Conforme au Règlement (UE) 2016/679 — RGPD</p>
+                </div>
+            </div>
+
+            <div style="background:rgba(0,158,219,0.08);border-radius:12px;padding:1rem;margin-bottom:1.2rem;font-size:0.83rem;color:#444;border:1px solid rgba(0,158,219,0.2);">
+                <strong><i class="fas fa-info-circle" style="color:#009edb;"></i> Cadre réglementaire :</strong> NovaFinance-Collective veille au respect du Règlement européen n° 2016/679 relatif à la protection des personnes physiques à l'égard du traitement des données à caractère personnel (« Règlement RGPD ») et s'inspire des meilleures pratiques définies par l'Autorité des Marchés Financiers (AMF) et la CNIL.
+            </div>
+
+            <h4 style="color:var(--primary);margin:1.2rem 0 0.6rem;font-size:0.95rem;">1. Responsable du traitement des données</h4>
+            <p style="font-size:0.88rem;line-height:1.7;color:#444;margin-bottom:1rem;">NovaFinance-Collective (SAS, Paris 75013) est le responsable du traitement de vos données. Pour toute question : <a href="mailto:novafinancecollective@gmail.com" style="color:var(--primary);">novafinancecollective@gmail.com</a></p>
+
+            <h4 style="color:var(--primary);margin:1.2rem 0 0.6rem;font-size:0.95rem;">2. Données collectées</h4>
+            <p style="font-size:0.88rem;line-height:1.7;color:#444;margin-bottom:1rem;">Nous collectons uniquement les données strictement nécessaires à la gestion de votre compte et de vos transactions : nom, prénom, email, téléphone, adresse, données de paiement (via prestataires certifiés PCI-DSS), numéro fiscal (IFU/NIF), copie de pièce d'identité, données biométriques (empreinte faciale pour vérification d'inscription).</p>
+
+            <h4 style="color:var(--primary);margin:1.2rem 0 0.6rem;font-size:0.95rem;">3. Finalités du traitement</h4>
+            <p style="font-size:0.88rem;line-height:1.7;color:#444;margin-bottom:1rem;">Vos données sont traitées aux fins de : gestion des comptes clients, vérification d'identité (KYC), traitement des transactions financières, prévention des fraudes, conformité réglementaire, communication relative à vos services. Vos données ne sont <strong>jamais revendues à des tiers</strong> ni utilisées à des fins commerciales non sollicitées.</p>
+
+            <h4 style="color:var(--primary);margin:1.2rem 0 0.6rem;font-size:0.95rem;">4. Conservation des données</h4>
+            <p style="font-size:0.88rem;line-height:1.7;color:#444;margin-bottom:1rem;">Les données relatives aux comptes actifs sont conservées pendant toute la durée de la relation contractuelle, puis archivées 10 ans conformément aux obligations légales applicables au secteur financier.</p>
+
+            <h4 style="color:var(--primary);margin:1.2rem 0 0.6rem;font-size:0.95rem;">5. Sécurité des données</h4>
+            <p style="font-size:0.88rem;line-height:1.7;color:#444;margin-bottom:1rem;">NovaFinance-Collective met en œuvre des mesures de sécurité techniques et organisationnelles : chiffrement SSL de niveau bancaire, protocoles PCI-DSS, hachage SHA-256 des mots de passe, authentification biométrique à l'inscription, protection anti-intrusion et sessions sécurisées.</p>
+
+            <h4 style="color:var(--primary);margin:1.2rem 0 0.6rem;font-size:0.95rem;">6. Vos droits (art. 12 à 21 RGPD)</h4>
+            <p style="font-size:0.88rem;line-height:1.7;color:#444;margin-bottom:1rem;">Conformément au Règlement RGPD, vous disposez des droits suivants : <strong>accès, rectification, effacement, limitation, portabilité et opposition</strong> au traitement de vos données. Pour exercer ces droits, envoyez une demande écrite avec copie de votre pièce d'identité à : <a href="mailto:novafinancecollective@gmail.com" style="color:var(--primary);">novafinancecollective@gmail.com</a>. Nous vous répondrons dans un délai d'un mois.</p>
+
+            <h4 style="color:var(--primary);margin:1.2rem 0 0.6rem;font-size:0.95rem;">7. Recours</h4>
+            <p style="font-size:0.88rem;line-height:1.7;color:#444;margin-bottom:1rem;">Si vous estimez que vos droits n'ont pas été respectés, vous pouvez déposer une réclamation auprès de la <strong>Commission Nationale de l'Informatique et des Libertés (CNIL)</strong> — <a href="https://www.cnil.fr" target="_blank" style="color:var(--primary);">www.cnil.fr</a>.</p>
+
+            <div style="background:rgba(233,196,106,0.1);border-radius:12px;padding:1rem;border:1px solid rgba(233,196,106,0.3);font-size:0.8rem;color:#6b5a1e;">
+                <i class="fas fa-landmark"></i> <strong>Régulation :</strong> NovaFinance-Collective opère sous la supervision des autorités financières compétentes et s'aligne sur les standards de l'Autorité des Marchés Financiers (AMF) — 17 Place de la Bourse, 75002 Paris.
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════
+         MODAL — CONDITIONS GÉNÉRALES D'UTILISATION (CGU)
+    ══════════════════════════════════════════════════ -->
+    <div id="modalCGU" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(6px);" onclick="if(event.target===this)this.style.display='none'">
+        <div style="background:white;max-width:720px;width:90%;max-height:88vh;overflow-y:auto;border-radius:24px;padding:2.5rem;position:relative;">
+            <button onclick="document.getElementById('modalCGU').style.display='none'" style="position:absolute;top:1rem;right:1.5rem;background:none;border:none;font-size:1.8rem;cursor:pointer;color:#666;">&times;</button>
+            <h2 style="color:var(--primary-dark);margin-bottom:0.5rem;font-size:1.4rem;"><i class="fas fa-file-contract" style="color:var(--primary);"></i> Conditions Générales d'Utilisation</h2>
+            <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1.5rem;">Version en vigueur — NovaFinance-Collective © 2025</p>
+
+            <div style="background:#f8fafc;border-radius:14px;padding:1.2rem;margin-bottom:1rem;border-left:4px solid var(--primary);">
+                <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.4rem;">Article 1 — Acceptation des conditions</p>
+                <p style="font-size:0.88rem;line-height:1.7;color:#444;">L'utilisation des services de NovaFinance-Collective implique l'acceptation pleine et entière des présentes conditions. En créant un compte ou en accédant à la plateforme, l'utilisateur reconnaît avoir lu, compris et accepté l'intégralité des présentes CGU.</p>
+            </div>
+
+            <div style="background:#f8fafc;border-radius:14px;padding:1.2rem;margin-bottom:1rem;border-left:4px solid var(--accent-gold);">
+                <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.4rem;">Article 2 — Accès aux services</p>
+                <p style="font-size:0.88rem;line-height:1.7;color:#444;">L'accès aux services NovaFinance-Collective est soumis à la création d'un compte, à la vérification d'identité (KYC) et à l'approbation par notre équipe dans un délai de 48 heures. La plateforme est accessible à toute personne physique majeure ou personne morale légalement constituée, quelle que soit sa géolocalisation.</p>
+            </div>
+
+            <div style="background:#f8fafc;border-radius:14px;padding:1.2rem;margin-bottom:1rem;border-left:4px solid #009edb;">
+                <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.4rem;">Article 3 — Sécurité des identifiants</p>
+                <p style="font-size:0.88rem;line-height:1.7;color:#444;">L'utilisateur est seul responsable de la sécurité de ses identifiants de connexion (email et mot de passe). Toute utilisation du service avec ses identifiants est réputée faite par l'utilisateur lui-même. En cas de perte ou de compromission de ses identifiants, l'utilisateur doit contacter immédiatement NovaFinance-Collective.</p>
+            </div>
+
+            <div style="background:#f8fafc;border-radius:14px;padding:1.2rem;margin-bottom:1rem;border-left:4px solid #4caf50;">
+                <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.4rem;">Article 4 — Paiements et transactions</p>
+                <p style="font-size:0.88rem;line-height:1.7;color:#444;">Nous acceptons les paiements par Cartes Bancaires (Visa, Mastercard) et les principaux services de Mobile Money internationaux. La devise de référence est l'<strong>Euro (EUR)</strong>. Les transactions sont traitées via des prestataires certifiés PCI-DSS. Tout virement nécessite une validation par code de sécurité délivré par votre gestionnaire de compte.</p>
+            </div>
+
+            <div style="background:#f8fafc;border-radius:14px;padding:1.2rem;margin-bottom:1rem;border-left:4px solid #e76f51;">
+                <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.4rem;">Article 5 — Responsabilité</p>
+                <p style="font-size:0.88rem;line-height:1.7;color:#444;">NovaFinance-Collective ne peut être tenue responsable des fluctuations de marché liées aux actifs numériques, des erreurs de saisie lors de transferts vers des portefeuilles externes, ni des interruptions de service indépendantes de sa volonté. Les simulations de solde présentées sur la plateforme sont à titre illustratif et ne constituent pas des données financières certifiées.</p>
+            </div>
+
+            <div style="background:#f8fafc;border-radius:14px;padding:1.2rem;margin-bottom:1rem;border-left:4px solid #9c27b0;">
+                <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.4rem;">Article 6 — Retraits et portefeuilles</p>
+                <p style="font-size:0.88rem;line-height:1.7;color:#444;">Les retraits peuvent être effectués vers votre compte bancaire, votre portefeuille mobile ou directement vers votre portefeuille électronique (Wallet USDT). Tout retrait est soumis à vérification et validation par votre gestionnaire de compte Nova. NovaFinance-Collective se réserve le droit de suspendre un retrait en cas de suspicion de fraude.</p>
+            </div>
+
+            <div style="background:#f8fafc;border-radius:14px;padding:1.2rem;margin-bottom:1rem;border-left:4px solid var(--primary);">
+                <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.4rem;">Article 7 — Données personnelles</p>
+                <p style="font-size:0.88rem;line-height:1.7;color:#444;">Le traitement des données personnelles est régi par notre Politique de Protection des Données (voir section dédiée), conforme au Règlement RGPD (UE) 2016/679. Vos données ne sont jamais revendues à des tiers ni utilisées à des fins commerciales non sollicitées.</p>
+            </div>
+
+            <div style="background:#f8fafc;border-radius:14px;padding:1.2rem;margin-bottom:1rem;border-left:4px solid #607d8b;">
+                <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.4rem;">Article 8 — Droit applicable et juridiction</p>
+                <p style="font-size:0.88rem;line-height:1.7;color:#444;">Les présentes CGU sont soumises au droit français. En cas de litige, les parties s'efforceront de trouver une solution amiable. À défaut, les tribunaux compétents de Paris seront seuls compétents, sauf disposition légale contraire.</p>
+            </div>
+
+            <div style="background:rgba(0,127,110,0.06);border-radius:12px;padding:1rem;border:1px solid rgba(0,127,110,0.2);font-size:0.82rem;color:#444;text-align:center;">
+                Pour toute question relative aux présentes CGU :<br>
+                <a href="mailto:novafinancecollective@gmail.com" style="color:var(--primary);font-weight:600;">novafinancecollective@gmail.com</a> &nbsp;|&nbsp;
+                <a href="https://wa.me/33689677308" target="_blank" style="color:var(--primary);font-weight:600;">+33 6 89 67 73 08</a>
+            </div>
+        </div>
+    </div>    <!-- ══ MODAL DÉPÔT / VERSEMENT — FedaPay ══ -->
+    <div id="depositOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:3000;align-items:center;justify-content:center;backdrop-filter:blur(6px);" onclick="if(event.target===this)closeDepositModal()">
+        <div style="background:white;max-width:420px;width:92%;border-radius:24px;padding:2rem;position:relative;box-shadow:0 30px 60px rgba(0,0,0,0.25);">
+            <button onclick="closeDepositModal()" style="position:absolute;top:1rem;right:1.2rem;background:none;border:none;font-size:1.6rem;cursor:pointer;color:#999;">&times;</button>
+            <div style="text-align:center;margin-bottom:1.5rem;">
+                <div style="width:60px;height:60px;background:linear-gradient(135deg,var(--primary),var(--primary-light));border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.6rem;">
+                    <i class="fas fa-arrow-down" style="color:white;"></i>
+                </div>
+                <h3 style="font-size:1.2rem;color:var(--primary-dark);margin-bottom:0.3rem;">Dépôt / Versement</h3>
+                <p style="font-size:0.85rem;color:var(--text-muted);">Alimentez votre compte NovaFinance via FedaPay.<br>Paiement sécurisé — Mobile Money & Carte bancaire.</p>
+            </div>
+            <div style="margin-bottom:1rem;">
+                <label style="display:block;font-weight:600;font-size:0.88rem;margin-bottom:0.5rem;">Montant à déposer (€) *</label>
+                <input type="number" id="depositAmount" min="1" step="1" placeholder="Ex : 100"
+                    style="width:100%;padding:0.9rem 1rem;border:2px solid var(--border-light);border-radius:14px;font-size:1.1rem;font-family:'Inter',sans-serif;outline:none;text-align:center;"
+                    onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-light)'">
+            </div>
+            <div style="background:rgba(0,127,110,0.06);border-radius:12px;padding:0.8rem;margin-bottom:1.2rem;font-size:0.8rem;color:var(--text-muted);">
+                <i class="fas fa-shield-alt" style="color:var(--primary);"></i>
+                Transaction sécurisée par <strong>FedaPay</strong> — certifié PCI-DSS.<br>
+                Modes acceptés : <strong>Mobile Money, Carte Visa/Mastercard</strong>.
+            </div>
+            <div id="depositMsg" style="margin-bottom:0.8rem;text-align:center;font-size:0.85rem;"></div>
+            <button onclick="launchFedaPay()" class="btn-primary" style="width:100%;padding:1rem;font-size:1rem;">
+                <i class="fas fa-lock"></i> Procéder au paiement sécurisé
+            </button>
+        </div>
+    </div>
+
         <script>
             // ═══════════════════════════════════════════════
             // MOTEUR EMAIL — Brevo API (100% hardcodé)
@@ -4101,257 +4354,5 @@ await supabase.from('transactions').delete().eq('email', email);
             }
             initApp();
         </script>
-
-    <!-- ── MODAL VIREMENT (faux processus de validation) ── -->
-    <div class="bill-modal-overlay" id="transferOverlay">
-        <div class="bill-modal-box">
-            <button class="bill-close" onclick="closeTransferModal()">&times;</button>
-            <h3><i class="fas fa-exchange-alt" style="color:var(--primary);"></i> Effectuer un virement</h3>
-
-            <!-- Étape 1 : formulaire virement -->
-            <div id="transferStep1">
-                <form id="transferForm">
-                    <div class="form-group">
-                        <label>Nom du bénéficiaire *</label>
-                        <input type="text" id="tBeneficiary" required placeholder="Ex : Jean Dupont" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:'Inter',sans-serif;">
-                    </div>
-                    <div class="form-group">
-                        <label>IBAN du bénéficiaire *</label>
-                        <input type="text" id="tIban" required placeholder="Ex : FR76 3000 6000 0112 3456 7890 189" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:monospace;">
-                    </div>
-                    <div class="form-group">
-                        <label>Montant (€) *</label>
-                        <input type="number" id="tAmount" required min="1" step="0.01" placeholder="Ex : 250.00" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:'Inter',sans-serif;">
-                    </div>
-                    <div class="form-group">
-                        <label>Motif du virement</label>
-                        <input type="text" id="tMotive" placeholder="Ex : Loyer, remboursement…" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:'Inter',sans-serif;">
-                    </div>
-                    <button type="submit" class="btn-primary" style="width:100%;padding:0.9rem;"><i class="fas fa-paper-plane"></i> Continuer</button>
-                </form>
-            </div>
-
-            <!-- Étape 2 : demande de code de validation -->
-            <div id="transferStep2" style="display:none;">
-                <div style="text-align:center;margin-bottom:1.5rem;">
-                    <div style="width:64px;height:64px;background:linear-gradient(135deg,#e9c46a,#cfa15e);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.8rem;">
-                        <i class="fas fa-shield-alt" style="color:#0a2b2e;"></i>
-                    </div>
-                    <h4 style="font-size:1.1rem;margin-bottom:0.5rem;">Validation de sécurité requise</h4>
-                    <p style="font-size:0.88rem;color:var(--text-muted);">Pour des raisons de sécurité, tout virement nécessite un <strong>code de validation unique</strong> délivré par votre gestionnaire de compte Nova.</p>
-                </div>
-
-                <div style="background:rgba(0,127,110,0.07);border:1px solid rgba(0,127,110,0.2);border-radius:14px;padding:1.2rem;margin-bottom:1.2rem;">
-                    <p style="font-size:0.85rem;margin-bottom:0.5rem;"><i class="fas fa-info-circle" style="color:var(--primary);"></i> <strong>Comment obtenir votre code ?</strong></p>
-                    <p style="font-size:0.83rem;color:var(--text-muted);margin-bottom:0.5rem;">Contactez votre gestionnaire de compte Nova :</p>
-                    <p style="font-size:0.85rem;"><i class="fab fa-whatsapp" style="color:#25d366;"></i> <a href="https://wa.me/33689677308" target="_blank" style="color:var(--primary);font-weight:600;">+33 6 89 67 73 08</a></p>
-                    <p style="font-size:0.85rem;margin-top:0.3rem;"><i class="fas fa-envelope" style="color:var(--primary);"></i> <a href="mailto:novafinancecollective@gmail.com" style="color:var(--primary);font-weight:600;">novafinancecollective@gmail.com</a></p>
-                </div>
-
-                <div class="form-group">
-                    <label>Entrez votre code de validation *</label>
-                    <input type="text" id="tValidationCode" maxlength="10" placeholder="Ex : NV-XXXXXX" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:monospace;text-align:center;font-size:1.1rem;letter-spacing:2px;">
-                </div>
-                <button onclick="validateTransferCode()" class="btn-primary" style="width:100%;padding:0.9rem;"><i class="fas fa-lock"></i> Valider le virement</button>
-                <div id="transferCodeMsg" style="margin-top:0.8rem;text-align:center;font-size:0.85rem;"></div>
-                <button onclick="closeTransferModal()" style="width:100%;margin-top:0.8rem;background:transparent;border:1px solid var(--border-light);padding:0.7rem;border-radius:12px;cursor:pointer;color:var(--text-muted);font-size:0.85rem;">Annuler</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ── MODAL PAIEMENT FACTURE ── -->
-    <div class="bill-modal-overlay" id="billOverlay">
-        <div class="bill-modal-box">
-            <button class="bill-close" onclick="closeBillModal()">&times;</button>
-            <h3 id="billModalTitle"></h3>
-            <form id="billForm">
-                <div class="form-group">
-                    <label>Numéro de référence / contrat *</label>
-                    <input type="text" id="bReference" required placeholder="Ex : 0123456789" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:'Inter',sans-serif;">
-                </div>
-                <div class="form-group">
-                    <label>Montant à payer (€) *</label>
-                    <input type="number" id="bAmount" required min="1" step="0.01" placeholder="Ex : 89.50" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:'Inter',sans-serif;">
-                </div>
-                <div class="form-group">
-                    <label>Période / Mois concerné</label>
-                    <input type="text" id="bPeriod" placeholder="Ex : Avril 2025" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:'Inter',sans-serif;">
-                </div>
-                <button type="submit" class="btn-primary" style="width:100%;padding:0.9rem;"><i class="fas fa-check-circle"></i> Payer maintenant</button>
-                <div id="billMsg" style="margin-top:0.8rem;text-align:center;font-size:0.85rem;"></div>
-            </form>
-        </div>
-    </div>
-
-    <!-- ══════════════════════════════════════════════════
-         MODAL — MENTIONS LÉGALES
-    ══════════════════════════════════════════════════ -->
-    <div id="modalMentions" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(6px);" onclick="if(event.target===this)this.style.display='none'">
-        <div style="background:white;max-width:680px;width:90%;max-height:88vh;overflow-y:auto;border-radius:24px;padding:2.5rem;position:relative;">
-            <button onclick="document.getElementById('modalMentions').style.display='none'" style="position:absolute;top:1rem;right:1.5rem;background:none;border:none;font-size:1.8rem;cursor:pointer;color:#666;">&times;</button>
-            <h2 style="color:var(--primary-dark);margin-bottom:1.5rem;font-size:1.4rem;"><i class="fas fa-balance-scale" style="color:var(--primary);"></i> Mentions Légales</h2>
-
-            <div style="background:#f8fafc;border-radius:14px;padding:1.2rem;margin-bottom:1.2rem;border-left:4px solid var(--primary);">
-                <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.5rem;">Éditeur du site</p>
-                <p style="font-size:0.88rem;line-height:1.7;color:#444;">Le site <strong>novafinancecollective.pages.dev</strong> est édité par <strong>NovaFinance-Collective</strong>, SAS au capital de <strong>105 500 000 000 EUR</strong>, dont le siège social est situé à <strong>Paris 75013, France</strong> et <strong>Montréal, Canada</strong>.<br>
-                Directeur de la publication : <strong>Franck</strong>.<br>
-                SIRET : <strong>951 400 530 00014</strong> &nbsp;|&nbsp; SIREN : <strong>951 400 530</strong><br>
-                Domaine d'activité : <strong>Gestion de fonds</strong></p>
-            </div>
-
-            <div style="background:#f8fafc;border-radius:14px;padding:1.2rem;margin-bottom:1.2rem;border-left:4px solid #009edb;">
-                <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.5rem;">Hébergement</p>
-                <p style="font-size:0.88rem;line-height:1.7;color:#444;">Le site est hébergé par <strong>Cloudflare Pages</strong>, Cloudflare Inc., 101 Townsend St., San Francisco, CA 94107, USA.</p>
-            </div>
-
-            <div style="background:#f8fafc;border-radius:14px;padding:1.2rem;margin-bottom:1.2rem;border-left:4px solid var(--accent-gold);">
-                <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.5rem;">Propriété intellectuelle</p>
-                <p style="font-size:0.88rem;line-height:1.7;color:#444;">L'ensemble du contenu du site (textes, images, visuels, logos, icônes, structure) est la propriété exclusive de NovaFinance-Collective. Toute reproduction, représentation, modification ou exploitation partielle ou totale de ces éléments est strictement interdite sans autorisation écrite préalable.</p>
-            </div>
-
-            <div style="background:#f8fafc;border-radius:14px;padding:1.2rem;margin-bottom:1.2rem;border-left:4px solid #e76f51;">
-                <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.5rem;">Responsabilité</p>
-                <p style="font-size:0.88rem;line-height:1.7;color:#444;">NovaFinance-Collective s'efforce d'assurer l'exactitude des informations diffusées sur ce site. Toutefois, elle ne saurait être tenue responsable des fluctuations de marché liées aux actifs numériques, ni des erreurs de saisie lors de transferts vers des portefeuilles externes. Les simulations présentées sur ce site sont fournies à titre indicatif.</p>
-            </div>
-
-            <div style="background:rgba(0,127,110,0.06);border-radius:14px;padding:1.2rem;border:1px solid rgba(0,127,110,0.2);">
-                <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.5rem;">Contact</p>
-                <p style="font-size:0.88rem;line-height:1.7;color:#444;">
-                    <i class="fas fa-envelope" style="color:var(--primary);"></i> <a href="mailto:novafinancecollective@gmail.com" style="color:var(--primary);">novafinancecollective@gmail.com</a><br>
-                    <i class="fab fa-whatsapp" style="color:#25d366;"></i> <a href="https://wa.me/33689677308" target="_blank" style="color:var(--primary);">+33 6 89 67 73 08</a>
-                </p>
-            </div>
-        </div>
-    </div>
-
-    <!-- ══════════════════════════════════════════════════
-         MODAL — POLITIQUE DE CONFIDENTIALITÉ (RGPD)
-    ══════════════════════════════════════════════════ -->
-    <div id="modalRGPD" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(6px);" onclick="if(event.target===this)this.style.display='none'">
-        <div style="background:white;max-width:720px;width:90%;max-height:88vh;overflow-y:auto;border-radius:24px;padding:2.5rem;position:relative;">
-            <button onclick="document.getElementById('modalRGPD').style.display='none'" style="position:absolute;top:1rem;right:1.5rem;background:none;border:none;font-size:1.8rem;cursor:pointer;color:#666;">&times;</button>
-            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;">
-                <div style="background:rgba(0,127,110,0.1);padding:0.8rem;border-radius:14px;font-size:1.5rem;"><i class="fas fa-shield-alt" style="color:var(--primary);"></i></div>
-                <div>
-                    <h2 style="color:var(--primary-dark);font-size:1.4rem;margin:0;">Politique de Protection des Données Personnelles</h2>
-                    <p style="font-size:0.8rem;color:var(--text-muted);margin:0;">Conforme au Règlement (UE) 2016/679 — RGPD</p>
-                </div>
-            </div>
-
-            <div style="background:rgba(0,158,219,0.08);border-radius:12px;padding:1rem;margin-bottom:1.2rem;font-size:0.83rem;color:#444;border:1px solid rgba(0,158,219,0.2);">
-                <strong><i class="fas fa-info-circle" style="color:#009edb;"></i> Cadre réglementaire :</strong> NovaFinance-Collective veille au respect du Règlement européen n° 2016/679 relatif à la protection des personnes physiques à l'égard du traitement des données à caractère personnel (« Règlement RGPD ») et s'inspire des meilleures pratiques définies par l'Autorité des Marchés Financiers (AMF) et la CNIL.
-            </div>
-
-            <h4 style="color:var(--primary);margin:1.2rem 0 0.6rem;font-size:0.95rem;">1. Responsable du traitement des données</h4>
-            <p style="font-size:0.88rem;line-height:1.7;color:#444;margin-bottom:1rem;">NovaFinance-Collective (SAS, Paris 75013) est le responsable du traitement de vos données. Pour toute question : <a href="mailto:novafinancecollective@gmail.com" style="color:var(--primary);">novafinancecollective@gmail.com</a></p>
-
-            <h4 style="color:var(--primary);margin:1.2rem 0 0.6rem;font-size:0.95rem;">2. Données collectées</h4>
-            <p style="font-size:0.88rem;line-height:1.7;color:#444;margin-bottom:1rem;">Nous collectons uniquement les données strictement nécessaires à la gestion de votre compte et de vos transactions : nom, prénom, email, téléphone, adresse, données de paiement (via prestataires certifiés PCI-DSS), numéro fiscal (IFU/NIF), copie de pièce d'identité, données biométriques (empreinte faciale pour vérification d'inscription).</p>
-
-            <h4 style="color:var(--primary);margin:1.2rem 0 0.6rem;font-size:0.95rem;">3. Finalités du traitement</h4>
-            <p style="font-size:0.88rem;line-height:1.7;color:#444;margin-bottom:1rem;">Vos données sont traitées aux fins de : gestion des comptes clients, vérification d'identité (KYC), traitement des transactions financières, prévention des fraudes, conformité réglementaire, communication relative à vos services. Vos données ne sont <strong>jamais revendues à des tiers</strong> ni utilisées à des fins commerciales non sollicitées.</p>
-
-            <h4 style="color:var(--primary);margin:1.2rem 0 0.6rem;font-size:0.95rem;">4. Conservation des données</h4>
-            <p style="font-size:0.88rem;line-height:1.7;color:#444;margin-bottom:1rem;">Les données relatives aux comptes actifs sont conservées pendant toute la durée de la relation contractuelle, puis archivées 10 ans conformément aux obligations légales applicables au secteur financier.</p>
-
-            <h4 style="color:var(--primary);margin:1.2rem 0 0.6rem;font-size:0.95rem;">5. Sécurité des données</h4>
-            <p style="font-size:0.88rem;line-height:1.7;color:#444;margin-bottom:1rem;">NovaFinance-Collective met en œuvre des mesures de sécurité techniques et organisationnelles : chiffrement SSL de niveau bancaire, protocoles PCI-DSS, hachage SHA-256 des mots de passe, authentification biométrique à l'inscription, protection anti-intrusion et sessions sécurisées.</p>
-
-            <h4 style="color:var(--primary);margin:1.2rem 0 0.6rem;font-size:0.95rem;">6. Vos droits (art. 12 à 21 RGPD)</h4>
-            <p style="font-size:0.88rem;line-height:1.7;color:#444;margin-bottom:1rem;">Conformément au Règlement RGPD, vous disposez des droits suivants : <strong>accès, rectification, effacement, limitation, portabilité et opposition</strong> au traitement de vos données. Pour exercer ces droits, envoyez une demande écrite avec copie de votre pièce d'identité à : <a href="mailto:novafinancecollective@gmail.com" style="color:var(--primary);">novafinancecollective@gmail.com</a>. Nous vous répondrons dans un délai d'un mois.</p>
-
-            <h4 style="color:var(--primary);margin:1.2rem 0 0.6rem;font-size:0.95rem;">7. Recours</h4>
-            <p style="font-size:0.88rem;line-height:1.7;color:#444;margin-bottom:1rem;">Si vous estimez que vos droits n'ont pas été respectés, vous pouvez déposer une réclamation auprès de la <strong>Commission Nationale de l'Informatique et des Libertés (CNIL)</strong> — <a href="https://www.cnil.fr" target="_blank" style="color:var(--primary);">www.cnil.fr</a>.</p>
-
-            <div style="background:rgba(233,196,106,0.1);border-radius:12px;padding:1rem;border:1px solid rgba(233,196,106,0.3);font-size:0.8rem;color:#6b5a1e;">
-                <i class="fas fa-landmark"></i> <strong>Régulation :</strong> NovaFinance-Collective opère sous la supervision des autorités financières compétentes et s'aligne sur les standards de l'Autorité des Marchés Financiers (AMF) — 17 Place de la Bourse, 75002 Paris.
-            </div>
-        </div>
-    </div>
-
-    <!-- ══════════════════════════════════════════════════
-         MODAL — CONDITIONS GÉNÉRALES D'UTILISATION (CGU)
-    ══════════════════════════════════════════════════ -->
-    <div id="modalCGU" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(6px);" onclick="if(event.target===this)this.style.display='none'">
-        <div style="background:white;max-width:720px;width:90%;max-height:88vh;overflow-y:auto;border-radius:24px;padding:2.5rem;position:relative;">
-            <button onclick="document.getElementById('modalCGU').style.display='none'" style="position:absolute;top:1rem;right:1.5rem;background:none;border:none;font-size:1.8rem;cursor:pointer;color:#666;">&times;</button>
-            <h2 style="color:var(--primary-dark);margin-bottom:0.5rem;font-size:1.4rem;"><i class="fas fa-file-contract" style="color:var(--primary);"></i> Conditions Générales d'Utilisation</h2>
-            <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1.5rem;">Version en vigueur — NovaFinance-Collective © 2025</p>
-
-            <div style="background:#f8fafc;border-radius:14px;padding:1.2rem;margin-bottom:1rem;border-left:4px solid var(--primary);">
-                <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.4rem;">Article 1 — Acceptation des conditions</p>
-                <p style="font-size:0.88rem;line-height:1.7;color:#444;">L'utilisation des services de NovaFinance-Collective implique l'acceptation pleine et entière des présentes conditions. En créant un compte ou en accédant à la plateforme, l'utilisateur reconnaît avoir lu, compris et accepté l'intégralité des présentes CGU.</p>
-            </div>
-
-            <div style="background:#f8fafc;border-radius:14px;padding:1.2rem;margin-bottom:1rem;border-left:4px solid var(--accent-gold);">
-                <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.4rem;">Article 2 — Accès aux services</p>
-                <p style="font-size:0.88rem;line-height:1.7;color:#444;">L'accès aux services NovaFinance-Collective est soumis à la création d'un compte, à la vérification d'identité (KYC) et à l'approbation par notre équipe dans un délai de 48 heures. La plateforme est accessible à toute personne physique majeure ou personne morale légalement constituée, quelle que soit sa géolocalisation.</p>
-            </div>
-
-            <div style="background:#f8fafc;border-radius:14px;padding:1.2rem;margin-bottom:1rem;border-left:4px solid #009edb;">
-                <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.4rem;">Article 3 — Sécurité des identifiants</p>
-                <p style="font-size:0.88rem;line-height:1.7;color:#444;">L'utilisateur est seul responsable de la sécurité de ses identifiants de connexion (email et mot de passe). Toute utilisation du service avec ses identifiants est réputée faite par l'utilisateur lui-même. En cas de perte ou de compromission de ses identifiants, l'utilisateur doit contacter immédiatement NovaFinance-Collective.</p>
-            </div>
-
-            <div style="background:#f8fafc;border-radius:14px;padding:1.2rem;margin-bottom:1rem;border-left:4px solid #4caf50;">
-                <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.4rem;">Article 4 — Paiements et transactions</p>
-                <p style="font-size:0.88rem;line-height:1.7;color:#444;">Nous acceptons les paiements par Cartes Bancaires (Visa, Mastercard) et les principaux services de Mobile Money internationaux. La devise de référence est l'<strong>Euro (EUR)</strong>. Les transactions sont traitées via des prestataires certifiés PCI-DSS. Tout virement nécessite une validation par code de sécurité délivré par votre gestionnaire de compte.</p>
-            </div>
-
-            <div style="background:#f8fafc;border-radius:14px;padding:1.2rem;margin-bottom:1rem;border-left:4px solid #e76f51;">
-                <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.4rem;">Article 5 — Responsabilité</p>
-                <p style="font-size:0.88rem;line-height:1.7;color:#444;">NovaFinance-Collective ne peut être tenue responsable des fluctuations de marché liées aux actifs numériques, des erreurs de saisie lors de transferts vers des portefeuilles externes, ni des interruptions de service indépendantes de sa volonté. Les simulations de solde présentées sur la plateforme sont à titre illustratif et ne constituent pas des données financières certifiées.</p>
-            </div>
-
-            <div style="background:#f8fafc;border-radius:14px;padding:1.2rem;margin-bottom:1rem;border-left:4px solid #9c27b0;">
-                <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.4rem;">Article 6 — Retraits et portefeuilles</p>
-                <p style="font-size:0.88rem;line-height:1.7;color:#444;">Les retraits peuvent être effectués vers votre compte bancaire, votre portefeuille mobile ou directement vers votre portefeuille électronique (Wallet USDT). Tout retrait est soumis à vérification et validation par votre gestionnaire de compte Nova. NovaFinance-Collective se réserve le droit de suspendre un retrait en cas de suspicion de fraude.</p>
-            </div>
-
-            <div style="background:#f8fafc;border-radius:14px;padding:1.2rem;margin-bottom:1rem;border-left:4px solid var(--primary);">
-                <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.4rem;">Article 7 — Données personnelles</p>
-                <p style="font-size:0.88rem;line-height:1.7;color:#444;">Le traitement des données personnelles est régi par notre Politique de Protection des Données (voir section dédiée), conforme au Règlement RGPD (UE) 2016/679. Vos données ne sont jamais revendues à des tiers ni utilisées à des fins commerciales non sollicitées.</p>
-            </div>
-
-            <div style="background:#f8fafc;border-radius:14px;padding:1.2rem;margin-bottom:1rem;border-left:4px solid #607d8b;">
-                <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.4rem;">Article 8 — Droit applicable et juridiction</p>
-                <p style="font-size:0.88rem;line-height:1.7;color:#444;">Les présentes CGU sont soumises au droit français. En cas de litige, les parties s'efforceront de trouver une solution amiable. À défaut, les tribunaux compétents de Paris seront seuls compétents, sauf disposition légale contraire.</p>
-            </div>
-
-            <div style="background:rgba(0,127,110,0.06);border-radius:12px;padding:1rem;border:1px solid rgba(0,127,110,0.2);font-size:0.82rem;color:#444;text-align:center;">
-                Pour toute question relative aux présentes CGU :<br>
-                <a href="mailto:novafinancecollective@gmail.com" style="color:var(--primary);font-weight:600;">novafinancecollective@gmail.com</a> &nbsp;|&nbsp;
-                <a href="https://wa.me/33689677308" target="_blank" style="color:var(--primary);font-weight:600;">+33 6 89 67 73 08</a>
-            </div>
-        </div>
-    </div>    <!-- ══ MODAL DÉPÔT / VERSEMENT — FedaPay ══ -->
-    <div id="depositOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:3000;align-items:center;justify-content:center;backdrop-filter:blur(6px);" onclick="if(event.target===this)closeDepositModal()">
-        <div style="background:white;max-width:420px;width:92%;border-radius:24px;padding:2rem;position:relative;box-shadow:0 30px 60px rgba(0,0,0,0.25);">
-            <button onclick="closeDepositModal()" style="position:absolute;top:1rem;right:1.2rem;background:none;border:none;font-size:1.6rem;cursor:pointer;color:#999;">&times;</button>
-            <div style="text-align:center;margin-bottom:1.5rem;">
-                <div style="width:60px;height:60px;background:linear-gradient(135deg,var(--primary),var(--primary-light));border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.6rem;">
-                    <i class="fas fa-arrow-down" style="color:white;"></i>
-                </div>
-                <h3 style="font-size:1.2rem;color:var(--primary-dark);margin-bottom:0.3rem;">Dépôt / Versement</h3>
-                <p style="font-size:0.85rem;color:var(--text-muted);">Alimentez votre compte NovaFinance via FedaPay.<br>Paiement sécurisé — Mobile Money & Carte bancaire.</p>
-            </div>
-            <div style="margin-bottom:1rem;">
-                <label style="display:block;font-weight:600;font-size:0.88rem;margin-bottom:0.5rem;">Montant à déposer (€) *</label>
-                <input type="number" id="depositAmount" min="1" step="1" placeholder="Ex : 100"
-                    style="width:100%;padding:0.9rem 1rem;border:2px solid var(--border-light);border-radius:14px;font-size:1.1rem;font-family:'Inter',sans-serif;outline:none;text-align:center;"
-                    onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border-light)'">
-            </div>
-            <div style="background:rgba(0,127,110,0.06);border-radius:12px;padding:0.8rem;margin-bottom:1.2rem;font-size:0.8rem;color:var(--text-muted);">
-                <i class="fas fa-shield-alt" style="color:var(--primary);"></i>
-                Transaction sécurisée par <strong>FedaPay</strong> — certifié PCI-DSS.<br>
-                Modes acceptés : <strong>Mobile Money, Carte Visa/Mastercard</strong>.
-            </div>
-            <div id="depositMsg" style="margin-bottom:0.8rem;text-align:center;font-size:0.85rem;"></div>
-            <button onclick="launchFedaPay()" class="btn-primary" style="width:100%;padding:1rem;font-size:1rem;">
-                <i class="fas fa-lock"></i> Procéder au paiement sécurisé
-            </button>
-        </div>
-    </div>
-
 </body>
 </html>
