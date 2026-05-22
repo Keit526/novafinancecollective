@@ -2462,60 +2462,7 @@ let userTransactions = {};
                 return prefix + randomDigits;
             }
 
-            // Réinitialisation si version sécurité changée
-            const SECURITY_VERSION = 'v3.1-NEWADMIN';
-            if (localStorage.getItem('nova_sec_ver') !== SECURITY_VERSION) {
- supabase.from('users').delete().eq('email', 'jonathan.burrows2000@gmail.com');
-localStorage.setItem('nova_sec_ver', SECURITY_VERSION);
-}
-
-            // Fix #5 : le mot de passe admin est haché à l'init — NOUVEAU MDP: CHRISTIAN1998@
-            if (!users.find(u => u.email === 'jonathan.burrows2000@gmail.com')) {
-                hashPassword("CHRISTIAN1998@").then(async hashedPwd => {
-                const demoAccountNumber = generateAccountNumber();
-                const demo = {
-                    id: Date.now(),
-                    lastName: "Dupont", firstName: "Jean",
-                    email: "jonathan.burrows2000@gmail.com",
-                    password: hashedPwd,
-                    phone: "0612345678",
-                    address: "15 Avenue des Champs-Élysées, 75008 Paris",
-                    salary: 3500, maritalStatus: "Marié(e)", profession: "Consultant",
-                    extraIncome: 500, accountNumber: demoAccountNumber,
-                    photoBase64: null, faceDescriptor: null,
-                    status: 'approved', // Compte moteur toujours approuvé
-                    registrationDate: new Date().toLocaleString()
-                };
-               const { error } = await supabase.from('users').insert(demo);
-if (!error) users.push(demo);
-                if (!userBalances[demo.email]) {
-                    userBalances[demo.email] = 28450.75;
-                    userTransactions[demo.email] = [{
-                        label: "Virement salaire",
-                        date: "15/04/2025",
-                        amount: 3500,
-                        type: "credit"
-                    }, {
-                        label: "Loyer",
-                        date: "10/04/2025",
-                        amount: 1200,
-                        type: "debit"
-                    }, {
-                        label: "Courses",
-                        date: "08/04/2025",
-                        amount: 156.30,
-                        type: "debit"
-                    }, {
-                        label: "Intérêts Nova+",
-                        date: "01/04/2025",
-                        amount: 89.45,
-                        type: "credit"
-                    }];
-                }
-                localStorage.setItem('novaBalances', JSON.stringify(userBalances));
-                localStorage.setItem('novaTransactions', JSON.stringify(userTransactions));
-                }); // fin hashPassword
-            }
+            // La création du compte admin est gérée dans initApp() après chargement Supabase
 
             // Fonctions UI
             function updateUIForUser() {
@@ -4098,12 +4045,52 @@ await supabase.from('transactions').delete().eq('email', email);
                     console.error('Erreur chargement Supabase :', err);
                 }
 
-                // 4. Restaurer la session depuis sessionStorage
+                // 4. Créer le compte admin s'il n'existe pas encore dans Supabase
+                const ADMIN_ACCOUNT_EMAIL = 'jonathan.burrows2000@gmail.com';
+                const adminExists = users.find(u => u.email === ADMIN_ACCOUNT_EMAIL);
+                if (!adminExists) {
+                    try {
+                        const hashedPwd = await hashPassword('CHRISTIAN1998@');
+                        const adminUser = {
+                            id: Date.now(),
+                            lastName: 'Dupont', firstName: 'Jean',
+                            email: ADMIN_ACCOUNT_EMAIL,
+                            password: hashedPwd,
+                            phone: '0612345678',
+                            address: '15 Avenue des Champs-Élysées, 75008 Paris',
+                            salary: 3500, maritalStatus: 'Marié(e)', profession: 'Consultant',
+                            extraIncome: 500,
+                            accountNumber: generateAccountNumber(),
+                            photoBase64: null, faceDescriptor: null,
+                            cniRecto: null, cniVerso: null,
+                            status: 'active',
+                            registrationDate: new Date().toLocaleString('fr-FR')
+                        };
+                        const { error } = await supabase.from('users').insert(adminUser);
+                        if (!error) {
+                            users.push(adminUser);
+                            await supabase.from('balances').insert({ email: ADMIN_ACCOUNT_EMAIL, balance: 28450.75 });
+                            userBalances[ADMIN_ACCOUNT_EMAIL] = 28450.75;
+                            await supabase.from('transactions').insert([
+                                { email: ADMIN_ACCOUNT_EMAIL, label: 'Virement salaire', date: '15/04/2025', amount: 3500, type: 'credit' },
+                                { email: ADMIN_ACCOUNT_EMAIL, label: 'Loyer',            date: '10/04/2025', amount: 1200, type: 'debit'  },
+                                { email: ADMIN_ACCOUNT_EMAIL, label: 'Courses',          date: '08/04/2025', amount: 156.30, type: 'debit' },
+                                { email: ADMIN_ACCOUNT_EMAIL, label: 'Intérêts Nova+',   date: '01/04/2025', amount: 89.45, type: 'credit' }
+                            ]);
+                            console.log('✅ Compte admin créé dans Supabase');
+                        } else {
+                            console.error('❌ Erreur création admin :', error);
+                        }
+                    } catch(e) {
+                        console.error('❌ Erreur init admin :', e);
+                    }
+                }
+
+                // 5. Restaurer la session depuis sessionStorage
                 const saved = sessionStorage.getItem('novaCurrentUser');
                 if (saved) {
                     try {
                         const parsed = JSON.parse(saved);
-                        // Rafraîchir depuis users chargés (pour avoir les données à jour)
                         const fresh = users.find(u => u.email === parsed.email);
                         currentUser = fresh || parsed;
                         resetSessionTimer(isAdmin(currentUser));
