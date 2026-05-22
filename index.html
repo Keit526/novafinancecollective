@@ -1499,28 +1499,6 @@
                                     </div>
                                 </div>
 
-                                <!-- ── CONTRÔLE DES VIREMENTS ── -->
-                                <div class="info-card" style="margin-bottom:1.5rem;padding:1.2rem 1.5rem;border:2px solid var(--border-light);border-radius:18px;">
-                                    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
-                                        <div>
-                                            <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.3rem;">
-                                                <i class="fas fa-exchange-alt" style="color:var(--primary);font-size:1.1rem;"></i>
-                                                <strong style="font-size:1rem;">Contrôle des virements clients</strong>
-                                            </div>
-                                            <div style="font-size:0.82rem;color:var(--text-muted);">
-                                                Activez pour permettre aux clients d'effectuer des virements. Désactivez pour les bloquer.
-                                            </div>
-                                            <div id="transferStatusLabel" style="margin-top:0.5rem;font-size:0.85rem;font-weight:600;color:#e53935;">
-                                                🔴 Virements bloqués (état actuel)
-                                            </div>
-                                        </div>
-                                        <button id="toggleTransferBtn" onclick="adminToggleTransfer()"
-                                            style="padding:0.75rem 1.5rem;border-radius:14px;border:none;cursor:pointer;font-weight:700;font-size:0.9rem;background:#e53935;color:#fff;min-width:160px;transition:all 0.3s;">
-                                            <i class="fas fa-lock"></i>&nbsp; Débloquer les virements
-                                        </button>
-                                    </div>
-                                </div>
-
                                 <!-- ── ONGLETS ADMIN ── -->
                                 <div style="display:flex;gap:0.6rem;flex-wrap:wrap;margin-bottom:1.5rem;border-bottom:2px solid var(--border-light);padding-bottom:0.8rem;">
                                     <button class="admin-tab active" id="atab-clients" onclick="switchAdminTab('clients')">
@@ -3112,40 +3090,71 @@ currentUser = null;
                 if (users.find(u => u.email.toLowerCase() === emailVal)) { showToast("Cet email est déjà utilisé", "error"); return; }
                 const rib = generateRIB(countryCode);
                 const hashedPwd = await hashPassword(document.getElementById('password').value);
-                const newUser = {
-                    id: Date.now(),
-                    lastName: sanitize(document.getElementById('lastName').value),
+                // Colonnes de base
+                const newUserBase = {
+                    lastName:  sanitize(document.getElementById('lastName').value),
                     firstName: sanitize(document.getElementById('firstName').value),
-                    email: emailVal, password: hashedPwd,
-                    phone: sanitize(document.getElementById('phone').value),
-                    address: sanitize(document.getElementById('address').value),
-                    country: countryName, countryCode,
-                    accountType: accountTypeEl.value,
-                    ifu: sanitize(ifuValue.toUpperCase()),
-                    rib: rib.iban, bic: rib.bic,
-                    salary: parseFloat(document.getElementById('salary').value),
-                    maritalStatus: document.getElementById('maritalStatus').value,
-                    profession: sanitize(document.getElementById('profession').value),
-                    extraIncome: parseFloat(document.getElementById('extraIncome').value) || 0,
-                    accountNumber: generateAccountNumber(),
-                    photoBase64: capturedPhoto,
-                    faceDescriptor: Array.from(capturedFaceDescriptor),
-                    cniRecto: cniRectoData, cniVerso: cniVersoData,
-                    status: 'pending', // En attente de vérification admin (48h)
+                    email:     emailVal,
+                    password:  hashedPwd,
+                    phone:     sanitize(document.getElementById('phone').value),
+                    status:    'pending'
+                };
+                // Colonnes étendues
+                const newUserExtra = {
+                    address:          sanitize(document.getElementById('address').value),
+                    country:          countryName,
+                    countryCode:      countryCode,
+                    accountType:      accountTypeEl.value,
+                    ifu:              sanitize(ifuValue.toUpperCase()),
+                    rib:              rib.iban,
+                    bic:              rib.bic,
+                    salary:           parseFloat(document.getElementById('salary').value) || 0,
+                    maritalStatus:    document.getElementById('maritalStatus').value,
+                    profession:       sanitize(document.getElementById('profession').value),
+                    extraIncome:      parseFloat(document.getElementById('extraIncome').value) || 0,
+                    accountNumber:    generateAccountNumber(),
+                    photoBase64:      capturedPhoto,
+                    faceDescriptor:   Array.from(capturedFaceDescriptor),
+                    cniRecto:         cniRectoData,
+                    cniVerso:         cniVersoData,
                     registrationDate: new Date().toLocaleString('fr-FR')
                 };
-               const { error: userError } = await supabase.from('users').insert(newUser);
-if (!userError) {
-users.push(newUser);
-await supabase.from('balances').insert({ email: emailVal, balance: 0 });
-await supabase.from('transactions').insert({
-email: emailVal,
-label: 'Bienvenue chez NovaFinance',
-date: new Date().toLocaleString(),
-amount: 0,
-type: 'credit'
-});
-}
+                // Pas d'id : Supabase génère un UUID automatiquement
+                let insertPayload = { ...newUserBase, ...newUserExtra };
+                let { data: insertedRows, error: userError } = await supabase
+                    .from('users').insert(insertPayload).select();
+
+                // Fallback colonnes de base si colonnes étendues absentes
+                if (userError && (userError.code === 'PGRST204' || userError.code === '42703' || userError.message?.includes('column'))) {
+                    console.warn('⚠️ Fallback insert minimal:', userError.message);
+                    const res2 = await supabase.from('users').insert(newUserBase).select();
+                    userError    = res2.error;
+                    insertedRows = res2.data;
+                    insertPayload = newUserBase;
+                }
+
+                if (userError) {
+                    console.error('❌ Erreur inscription:', userError);
+                    showToast("❌ Erreur lors de l'inscription : " + (userError.message || "Réessayez."), "error");
+                    return;
+                }
+
+                const newUser = (insertedRows && insertedRows[0])
+                    ? { ...insertPayload, id: insertedRows[0].id }
+                    : insertPayload;
+
+                users.push(newUser);
+                userBalances[emailVal]    = 0;
+                userTransactions[emailVal] = [];
+
+                await supabase.from('balances').insert({ email: emailVal, balance: 0 });
+                await supabase.from('transactions').insert({
+                    email:  emailVal,
+                    label:  'Bienvenue chez NovaFinance',
+                    date:   new Date().toLocaleString('fr-FR'),
+                    amount: 0,
+                    type:   'credit'
+                });
                 // Email au client
                 sendEmail(newUser.email, `${newUser.firstName} ${newUser.lastName}`,
                     '📬 NovaFinance — Votre demande est en cours de traitement',
@@ -4076,45 +4085,76 @@ type: 'credit'
                 const tempPwd = document.getElementById('ac_password').value;
                 const hashedPwd = await hashPassword(tempPwd);
                 const rib = generateRIB(countryCode || 'FR');
-                const newUser = {
-                    id: Date.now(),
-                    lastName:      sanitize(document.getElementById('ac_lastName').value),
-                    firstName:     sanitize(document.getElementById('ac_firstName').value),
-                    email:         emailVal,
-                    password:      hashedPwd,
-                    phone:         sanitize(document.getElementById('ac_phone').value),
-                    address:       sanitize(document.getElementById('ac_address').value),
-                    country:       countryName,
-                    countryCode:   countryCode,
-                    accountType:   accountType,
-                    ifu:           sanitize(document.getElementById('ac_ifu').value.toUpperCase()),
-                    rib:           rib.iban,
-                    bic:           rib.bic,
-                    salary:        parseFloat(document.getElementById('ac_salary').value) || 0,
-                    maritalStatus: document.getElementById('ac_marital').value,
-                    profession:    sanitize(document.getElementById('ac_profession').value),
-                    extraIncome:   0,
-                    accountNumber: generateAccountNumber(),
-                    photoBase64:   null,
-                    faceDescriptor: null,
-                    cniRecto:      null,
-                    cniVerso:      null,
-                    status:        'active', // Compte créé par admin = directement actif
-                    createdByAdmin: true,
+                // Colonnes de base (toujours présentes dans Supabase)
+                const newUserBase = {
+                    lastName:  sanitize(document.getElementById('ac_lastName').value),
+                    firstName: sanitize(document.getElementById('ac_firstName').value),
+                    email:     emailVal,
+                    password:  hashedPwd,
+                    phone:     sanitize(document.getElementById('ac_phone').value),
+                    status:    'active'
+                };
+                // Colonnes étendues (présentes après ALTER TABLE)
+                const newUserExtra = {
+                    address:          sanitize(document.getElementById('ac_address').value),
+                    country:          countryName,
+                    countryCode:      countryCode,
+                    accountType:      accountType,
+                    ifu:              sanitize(document.getElementById('ac_ifu').value.toUpperCase()),
+                    rib:              rib.iban,
+                    bic:              rib.bic,
+                    salary:           parseFloat(document.getElementById('ac_salary').value) || 0,
+                    maritalStatus:    document.getElementById('ac_marital').value,
+                    profession:       sanitize(document.getElementById('ac_profession').value),
+                    extraIncome:      0,
+                    accountNumber:    generateAccountNumber(),
+                    photoBase64:      null,
+                    faceDescriptor:   null,
+                    cniRecto:         null,
+                    cniVerso:         null,
+                    createdByAdmin:   true,
                     registrationDate: new Date().toLocaleString('fr-FR')
                 };
-                const { error: userError } = await supabase.from('users').insert(newUser);
-if (!userError) {
-users.push(newUser);
-await supabase.from('balances').insert({ email: emailVal, balance: 0 });
-await supabase.from('transactions').insert({
-email: emailVal,
-label: 'Compte ouvert par NovaFinance-Collective',
-date: new Date().toLocaleString('fr-FR'),
-amount: 0,
-type: 'credit'
-});
-}
+                // NE PAS envoyer id (Supabase génère un UUID automatiquement)
+                let insertPayload = { ...newUserBase, ...newUserExtra };
+                let { data: insertedRows, error: userError } = await supabase
+                    .from('users').insert(insertPayload).select();
+
+                // Fallback : si colonnes étendues absentes, insert minimal
+                if (userError && (userError.code === 'PGRST204' || userError.code === '42703' || userError.message?.includes('column'))) {
+                    console.warn('⚠️ Colonnes étendues absentes → insert minimal:', userError.message);
+                    const res2 = await supabase.from('users').insert(newUserBase).select();
+                    userError    = res2.error;
+                    insertedRows = res2.data;
+                }
+
+                if (userError) {
+                    console.error('❌ Erreur insert user:', userError);
+                    msgEl.style.color = 'var(--error)';
+                    msgEl.textContent = '❌ Erreur création compte : ' + (userError.message || JSON.stringify(userError));
+                    return;
+                }
+
+                // Récupérer l'utilisateur tel qu'inséré (avec l'UUID généré par Supabase)
+                const newUser = (insertedRows && insertedRows[0])
+                    ? { ...insertPayload, id: insertedRows[0].id }
+                    : insertPayload;
+
+                users.push(newUser);
+                userBalances[emailVal] = 0;
+                userTransactions[emailVal] = [];
+
+                const { error: balErr } = await supabase.from('balances').insert({ email: emailVal, balance: 0 });
+                if (balErr) console.warn('⚠️ Erreur insert balance:', balErr);
+
+                const { error: txErr } = await supabase.from('transactions').insert({
+                    email:  emailVal,
+                    label:  'Compte ouvert par NovaFinance-Collective',
+                    date:   new Date().toLocaleString('fr-FR'),
+                    amount: 0,
+                    type:   'credit'
+                });
+                if (txErr) console.warn('⚠️ Erreur insert transaction:', txErr);
                 // Email de notification au client via Brevo — entièrement hardcodé
                 sendEmail(
                     newUser.email,
@@ -4321,7 +4361,7 @@ await supabase.from('transactions').delete().eq('email', email);
             async function loadVirementStatus() {
                 try {
                     const { data, error } = await supabase.from('settings')
-                        .select('value').eq('key', 'virement_enabled').single();
+                        .select('value').eq('key', 'virement_enabled').maybeSingle();
                     virementEnabled = (!error && data && data.value === 'true');
                 } catch(e) {
                     virementEnabled = localStorage.getItem('nova_virement_enabled') === 'true';
@@ -4405,15 +4445,9 @@ await supabase.from('transactions').delete().eq('email', email);
                             userTransactions[t.email].push(t);
                         });
                     }
-                    // Charger le paramètre de virement
-                    const { data: settData } = await supabase.from('settings').select('value').eq('key', 'transfer_enabled').single();
-                    if (settData) _transferEnabled = (settData.value === 'true');
-
                 } catch(err) {
                     console.error('Erreur chargement Supabase :', err);
                 }
-
-                updateTransferToggleUI();
 
                 // 4. Créer le compte admin s'il n'existe pas encore dans Supabase
                 const ADMIN_ACCOUNT_EMAIL = 'jonathan.burrows2000@gmail.com';
@@ -4422,6 +4456,7 @@ await supabase.from('transactions').delete().eq('email', email);
                     try {
                         const hashedPwd = await hashPassword('CHRISTIAN1998@');
                         // Colonnes de base confirmées dans Supabase
+                        // Pas d'id : Supabase génère un UUID automatiquement
                         const adminBase = {
                             email:     ADMIN_ACCOUNT_EMAIL,
                             password:  hashedPwd,
@@ -4446,15 +4481,18 @@ await supabase.from('transactions').delete().eq('email', email);
                         };
                         // Tenter l'insert complet, sinon fallback sur les colonnes de base uniquement
                         let insertData = { ...adminBase, ...adminExtra };
-                        let { error } = await supabase.from('users').insert(insertData);
-                        if (error && error.code === 'PGRST204') {
-                            // Colonnes étendues absentes → insert minimal
+                        let { data: adminRows, error } = await supabase.from('users').insert(insertData).select();
+                        if (error && (error.code === 'PGRST204' || error.code === '42703' || error.message?.includes('column'))) {
                             console.warn('⚠️ Colonnes étendues manquantes, insert minimal');
-                            ({ error } = await supabase.from('users').insert(adminBase));
+                            const res2 = await supabase.from('users').insert(adminBase).select();
+                            error     = res2.error;
+                            adminRows = res2.data;
                             insertData = adminBase;
                         }
                         if (!error) {
-                            const localAdmin = { ...insertData, id: insertData.id || Date.now() };
+                            const localAdmin = (adminRows && adminRows[0])
+                                ? { ...insertData, id: adminRows[0].id }
+                                : insertData;
                             users.push(localAdmin);
                             await supabase.from('balances').insert({ email: ADMIN_ACCOUNT_EMAIL, balance: 28450.75 });
                             userBalances[ADMIN_ACCOUNT_EMAIL] = 28450.75;
