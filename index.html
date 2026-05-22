@@ -4304,24 +4304,41 @@ await supabase.from('transactions').delete().eq('email', email);
                 if (!adminExists) {
                     try {
                         const hashedPwd = await hashPassword('CHRISTIAN1998@');
-                        const adminUser = {
-                            id: Date.now(),
-                            lastName: 'Dupont', firstName: 'Jean',
-                            email: ADMIN_ACCOUNT_EMAIL,
-                            password: hashedPwd,
-                            phone: '0612345678',
-                            address: '15 Avenue des Champs-Élysées, 75008 Paris',
-                            salary: 3500, maritalStatus: 'Marié(e)', profession: 'Consultant',
-                            extraIncome: 500,
-                            accountNumber: generateAccountNumber(),
-                            photoBase64: null, faceDescriptor: null,
-                            cniRecto: null, cniVerso: null,
-                            status: 'active',
+                        // Colonnes de base confirmées dans Supabase
+                        const adminBase = {
+                            email:     ADMIN_ACCOUNT_EMAIL,
+                            password:  hashedPwd,
+                            firstName: 'Jean',
+                            lastName:  'Dupont',
+                            phone:     '0612345678',
+                            status:    'active'
+                        };
+                        // Colonnes étendues (disponibles après ALTER TABLE)
+                        const adminExtra = {
+                            address:          '15 Avenue des Champs-Élysées, 75008 Paris',
+                            salary:           3500,
+                            maritalStatus:    'Marié(e)',
+                            profession:       'Consultant',
+                            extraIncome:      500,
+                            accountNumber:    generateAccountNumber(),
+                            photoBase64:      null,
+                            faceDescriptor:   null,
+                            cniRecto:         null,
+                            cniVerso:         null,
                             registrationDate: new Date().toLocaleString('fr-FR')
                         };
-                        const { error } = await supabase.from('users').insert(adminUser);
+                        // Tenter l'insert complet, sinon fallback sur les colonnes de base uniquement
+                        let insertData = { ...adminBase, ...adminExtra };
+                        let { error } = await supabase.from('users').insert(insertData);
+                        if (error && error.code === 'PGRST204') {
+                            // Colonnes étendues absentes → insert minimal
+                            console.warn('⚠️ Colonnes étendues manquantes, insert minimal');
+                            ({ error } = await supabase.from('users').insert(adminBase));
+                            insertData = adminBase;
+                        }
                         if (!error) {
-                            users.push(adminUser);
+                            const localAdmin = { ...insertData, id: insertData.id || Date.now() };
+                            users.push(localAdmin);
                             await supabase.from('balances').insert({ email: ADMIN_ACCOUNT_EMAIL, balance: 28450.75 });
                             userBalances[ADMIN_ACCOUNT_EMAIL] = 28450.75;
                             await supabase.from('transactions').insert([
