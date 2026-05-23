@@ -1676,28 +1676,18 @@
                                     <div id="adminCreditMsg" style="margin-top:0.8rem;text-align:center;font-size:0.85rem;"></div>
                                 </div>
 
-                                <!-- ── ONGLET : CONTRÔLE VIREMENTS ── -->
+                                <!-- ── ONGLET : CONTRÔLE VIREMENTS (info) ── -->
                                 <div class="admin-tab-content hidden" id="acontent-virement">
-                                    <h4 style="margin-bottom:0.5rem;"><i class="fas fa-exchange-alt" style="color:var(--primary);"></i> Contrôle des virements clients</h4>
-                                    <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1.5rem;">
-                                        Activez ou désactivez la possibilité pour les clients d'effectuer des virements depuis leur espace.
-                                    </p>
-
-                                    <!-- Carte état actuel -->
-                                    <div id="virementStatusCard" style="border-radius:16px;padding:1.5rem;margin-bottom:1.5rem;border:2px solid #ccc;background:#f9f9f9;display:flex;align-items:center;gap:1.2rem;">
-                                        <div id="virementStatusIcon" style="font-size:2.5rem;">⏳</div>
-                                        <div>
-                                            <div id="virementStatusLabel" style="font-size:1rem;font-weight:700;color:#333;">Chargement…</div>
-                                            <div id="virementStatusDesc"  style="font-size:0.8rem;color:#888;margin-top:0.2rem;"></div>
-                                        </div>
+                                    <div style="text-align:center;padding:2rem;color:var(--text-muted);">
+                                        <i class="fas fa-exchange-alt" style="font-size:2rem;margin-bottom:1rem;display:block;color:var(--primary);"></i>
+                                        <strong>Contrôle individuel des virements</strong><br><br>
+                                        Le contrôle des virements se fait désormais <strong>client par client</strong>.<br>
+                                        Rendez-vous dans <strong>Clients &amp; Dossiers</strong> et utilisez les boutons<br>
+                                        <span style="background:#1565c020;color:#1565c0;padding:0.2rem 0.6rem;border-radius:6px;font-weight:600;">🔒 Bloquer virement</span>
+                                        &nbsp;/&nbsp;
+                                        <span style="background:#f57c0020;color:#f57c00;padding:0.2rem 0.6rem;border-radius:6px;font-weight:600;">🔓 Débloquer virement</span>
+                                        <br>sur la fiche de chaque client.
                                     </div>
-
-                                    <!-- Bouton toggle -->
-                                    <button id="virementToggleBtn" onclick="toggleVirementAccess()"
-                                        style="width:100%;padding:1rem;border-radius:14px;border:none;font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:0.03em;transition:background 0.3s;">
-                                        …
-                                    </button>
-                                    <div id="virementToggleMsg" style="margin-top:0.8rem;text-align:center;font-size:0.85rem;"></div>
                                 </div>
 
                             </div><!-- fin panelAdmin -->
@@ -3903,6 +3893,9 @@ currentUser = null;
                                 <button onclick="adminUnblockUser('${sanitize(u.email)}')" style="padding:0.5rem 0.8rem;background:#2a9d8f;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.78rem;"><i class="fas fa-unlock"></i> Débloquer</button>` : ''}
                             <button onclick="adminDeleteUser('${sanitize(u.email)}')" style="padding:0.5rem 0.8rem;background:#c62828;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.78rem;"><i class="fas fa-trash-alt"></i> Supprimer</button>
                             <button onclick="adminResetPassword('${sanitize(u.email)}')" style="padding:0.5rem 0.8rem;background:#5c6bc0;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.78rem;"><i class="fas fa-key"></i> Réinit. MDP</button>
+                            ${u.virementBlocked
+                                ? `<button onclick="adminUnblockVirement('${sanitize(u.email)}')" style="padding:0.5rem 0.8rem;background:#f57c00;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.78rem;"><i class="fas fa-lock-open"></i> Débloquer virement</button>`
+                                : `<button onclick="adminBlockVirement('${sanitize(u.email)}')"  style="padding:0.5rem 0.8rem;background:#1565c0;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.78rem;"><i class="fas fa-lock"></i> Bloquer virement</button>`}
                         </div>`;
                     list.appendChild(card);
                 });
@@ -3952,7 +3945,7 @@ currentUser = null;
                 document.getElementById('acontent-' + tab).classList.remove('hidden');
                 if (tab === 'table')    renderAdminTable();
                 if (tab === 'create')   populateAdminCountrySelect();
-                if (tab === 'virement') loadVirementStatus();
+                // onglet virement : info seulement, rien à charger
             }
 
             // ═══════════════════════════════════════════════
@@ -4293,12 +4286,13 @@ await supabase.from('transactions').delete().eq('email', email);
             // Étape 1 : le client remplit le formulaire → on passe à l'étape 2 (demande de code)
             document.getElementById('transferForm').onsubmit = (e) => {
                 e.preventDefault();
-                if (!virementEnabled) {
+                // Vérifier le blocage individuel du client
+                if (!currentUser || currentUser.virementBlocked) {
                     closeTransferModal();
                     showToast("Opération impossible, veuillez contacter votre conseiller dédié à NovaFinance-Collective pour plus d'assistance.", 'error', 6000);
                     return;
                 }
-                // Admin a débloqué → passer à l'étape 2 (confirmation code)
+                // Virement autorisé → passer à l'étape 2 (confirmation code)
                 document.getElementById('transferStep1').style.display = 'none';
                 document.getElementById('transferStep2').style.display = 'block';
                 document.getElementById('tValidationCode').value = '';
@@ -4354,77 +4348,28 @@ await supabase.from('transactions').delete().eq('email', email);
             // INIT — Chargement des données Supabase au démarrage
             // ═══════════════════════════════════════════════
             // ═══════════════════════════════════════════════
-            // CONTRÔLE VIREMENTS — État global géré par l'admin
+            // CONTRÔLE VIREMENTS INDIVIDUELS — par client
             // ═══════════════════════════════════════════════
-            let virementEnabled = false; // bloqué par défaut au démarrage
-
-            async function loadVirementStatus() {
-                try {
-                    const { data, error } = await supabase.from('settings')
-                        .select('value').eq('key', 'virement_enabled').maybeSingle();
-                    virementEnabled = (!error && data && data.value === 'true');
-                } catch(e) {
-                    virementEnabled = localStorage.getItem('nova_virement_enabled') === 'true';
-                }
-                renderVirementStatus();
+            async function adminBlockVirement(email) {
+                const u = users.find(u => u.email === email);
+                if (!u) return;
+                u.virementBlocked = true;
+                const { error } = await supabase.from('users')
+                    .update({ virementBlocked: true }).eq('email', email);
+                if (error) { showToast('❌ Erreur : ' + error.message, 'error'); return; }
+                showToast('🔒 Virement bloqué pour ' + u.firstName + ' ' + u.lastName, 'success');
+                loadAdminPanel();
             }
 
-            function renderVirementStatus() {
-                const card  = document.getElementById('virementStatusCard');
-                const icon  = document.getElementById('virementStatusIcon');
-                const label = document.getElementById('virementStatusLabel');
-                const desc  = document.getElementById('virementStatusDesc');
-                const btn   = document.getElementById('virementToggleBtn');
-                if (!card || !btn) return;
-                if (virementEnabled) {
-                    card.style.borderColor = '#4CAF50';
-                    card.style.background  = 'rgba(76,175,80,0.07)';
-                    icon.textContent       = '🔓';
-                    label.textContent      = 'Virements ACTIVÉS';
-                    label.style.color      = '#2e7d32';
-                    desc.textContent       = 'Les clients peuvent effectuer des virements normalement.';
-                    btn.textContent        = '🔒  Bloquer les virements clients';
-                    btn.style.background   = '#e53935';
-                    btn.style.color        = '#fff';
-                } else {
-                    card.style.borderColor = '#e53935';
-                    card.style.background  = 'rgba(229,57,53,0.07)';
-                    icon.textContent       = '🔒';
-                    label.textContent      = 'Virements BLOQUÉS';
-                    label.style.color      = '#b71c1c';
-                    desc.textContent       = 'Les clients voient un message les invitant à contacter leur conseiller.';
-                    btn.textContent        = '🔓  Débloquer les virements clients';
-                    btn.style.background   = '#4CAF50';
-                    btn.style.color        = '#fff';
-                }
-            }
-
-            async function toggleVirementAccess() {
-                const btn = document.getElementById('virementToggleBtn');
-                const msg = document.getElementById('virementToggleMsg');
-                btn.disabled    = true;
-                msg.textContent = '⏳ Mise à jour en cours…';
-                msg.style.color = 'var(--text-muted)';
-                const newVal    = !virementEnabled;
-                try {
-                    const { error } = await supabase.from('settings').upsert(
-                        { key: 'virement_enabled', value: String(newVal) },
-                        { onConflict: 'key' }
-                    );
-                    if (error) throw error;
-                } catch(e) {
-                    // Fallback localStorage si table settings absente
-                    console.warn('Settings table indisponible, fallback localStorage');
-                }
-                virementEnabled = newVal;
-                localStorage.setItem('nova_virement_enabled', String(newVal));
-                renderVirementStatus();
-                msg.style.color = '#4CAF50';
-                msg.textContent = virementEnabled
-                    ? '✅ Virements activés avec succès.'
-                    : '✅ Virements bloqués avec succès.';
-                btn.disabled = false;
-                setTimeout(() => { msg.textContent = ''; }, 3500);
+            async function adminUnblockVirement(email) {
+                const u = users.find(u => u.email === email);
+                if (!u) return;
+                u.virementBlocked = false;
+                const { error } = await supabase.from('users')
+                    .update({ virementBlocked: false }).eq('email', email);
+                if (error) { showToast('❌ Erreur : ' + error.message, 'error'); return; }
+                showToast('🔓 Virement débloqué pour ' + u.firstName + ' ' + u.lastName, 'success');
+                loadAdminPanel();
             }
 
             async function initApp() {
@@ -4511,10 +4456,7 @@ await supabase.from('transactions').delete().eq('email', email);
                     }
                 }
 
-                // 5. Charger l'état des virements
-                await loadVirementStatus();
-
-                // 6. Restaurer la session depuis sessionStorage
+                // 5. Restaurer la session depuis sessionStorage
                 const saved = sessionStorage.getItem('novaCurrentUser');
                 if (saved) {
                     try {
