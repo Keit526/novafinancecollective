@@ -1827,7 +1827,7 @@
                             <span><i class="fas fa-user-check" style="color:var(--primary);margin-right:0.7rem;"></i> Combien de temps prend l'ouverture de compte ?</span>
                             <i class="fas fa-chevron-down" style="color:var(--primary);font-size:0.8rem;"></i>
                         </summary>
-                        <p style="margin-top:1rem;color:var(--text-muted);line-height:1.7;">Votre dossier est traité dans un délai maximum de <strong>48 heures</strong> ouvrées. Une vérification d'identité est effectuée sur la base des documents fournis. En cas de documents non conformes, votre demande sera rejetée avec notification par email.</p>
+                        <p style="margin-top:1rem;color:var(--text-muted);line-height:1.7;">Votre dossier est traité dans un délai maximum de <strong>24 heures</strong> ouvrées. Une vérification d'identité est effectuée sur la base des documents fournis. En cas de documents non conformes, votre demande sera rejetée avec notification par email.</p>
                     </details>
 
                     <details style="background:rgba(255,255,255,0.8);backdrop-filter:blur(10px);border-radius:16px;padding:1.2rem 1.5rem;border:1px solid rgba(255,255,255,0.6);cursor:pointer;">
@@ -2428,7 +2428,7 @@
 
             <div style="background:#f8fafc;border-radius:14px;padding:1.2rem;margin-bottom:1rem;border-left:4px solid var(--accent-gold);">
                 <p style="font-size:0.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:0.4rem;">Article 2 — Accès aux services</p>
-                <p style="font-size:0.88rem;line-height:1.7;color:#444;">L'accès aux services NovaFinance-Collective est soumis à la création d'un compte, à la vérification d'identité (KYC) et à l'approbation par notre équipe dans un délai de 48 heures. La plateforme est accessible à toute personne physique majeure ou personne morale légalement constituée, quelle que soit sa géolocalisation.</p>
+                <p style="font-size:0.88rem;line-height:1.7;color:#444;">L'accès aux services NovaFinance-Collective est soumis à la création d'un compte, à la vérification d'identité (KYC) et à l'approbation par notre équipe dans un délai de 24 heures. La plateforme est accessible à toute personne physique majeure ou personne morale légalement constituée, quelle que soit sa géolocalisation.</p>
             </div>
 
             <div style="background:#f8fafc;border-radius:14px;padding:1.2rem;margin-bottom:1rem;border-left:4px solid #009edb;">
@@ -2803,11 +2803,7 @@ let userTransactions = {};
                         `https://ui-avatars.com/api/?background=007f6e&color=fff&size=80&name=${encodeURIComponent(currentUser.firstName+'+'+currentUser.lastName)}`;
                 }
                 // Solde
-                let balance = userBalances[currentUser.email] || 12845.75;
-                if (!userBalances[currentUser.email]) {
-                    userBalances[currentUser.email] = balance;
-                    localStorage.setItem('novaBalances', JSON.stringify(userBalances));
-                }
+                let balance = userBalances[currentUser.email] || 0;
                 document.getElementById('clientBalance').textContent = balance.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €';
                 renderClientTransactions();
             }
@@ -3312,12 +3308,16 @@ currentUser = null;
             updateDemoBalance();
 
             // Actions dashboard client
-            document.getElementById('refreshClientBalanceBtn').onclick = () => {
-                if (currentUser) {
-                    const bonus = +(Math.random() * 25 + 5).toFixed(2);
-                    addTransaction(currentUser.email, "Intérêts Nova+ Épargne collective", bonus, "credit");
-                    showToast(`+${bonus} € d'intérêts crédités`, "success");
+            document.getElementById('refreshClientBalanceBtn').onclick = async () => {
+                if (!currentUser) return;
+                // Recharger le vrai solde depuis Supabase
+                const { data } = await supabase.from('balances').select('balance').eq('email', currentUser.email).maybeSingle();
+                if (data !== null && data !== undefined) {
+                    userBalances[currentUser.email] = data.balance || 0;
                 }
+                const balance = userBalances[currentUser.email] || 0;
+                document.getElementById('clientBalance').textContent = balance.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' €';
+                showToast('✅ Solde mis à jour', 'success');
             };
             document.getElementById('advisorBtn').onclick = () => showToast("Un conseiller vous recontactera sous 24h", "info");
             document.querySelectorAll('.link-arrow').forEach(l => l.addEventListener('click', (e) => {
