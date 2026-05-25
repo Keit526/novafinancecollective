@@ -683,25 +683,27 @@
         
         .notification {
             position: fixed;
-            bottom: 24px;
-            right: 24px;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%) translateY(30px);
             background: var(--primary-dark);
             color: white;
-            padding: 12px 20px;
-            border-radius: 48px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
-            z-index: 200;
+            padding: 16px 32px;
+            border-radius: 16px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            max-width: 90vw;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+            z-index: 99999;
             opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.3s, transform 0.3s;
+            transition: opacity 0.35s, transform 0.35s;
             pointer-events: none;
         }
         
         .notification.show {
             opacity: 1;
-            transform: translateY(0);
+            transform: translateX(-50%) translateY(0);
         }
         
         .btn-primary:disabled {
@@ -1236,7 +1238,7 @@
                                 <i class="fas fa-check-circle" style="color:var(--success);"></i> Taux fixe 3% sur toute la durée<br>
                                 <i class="fas fa-check-circle" style="color:var(--success);"></i> Durée modulable 1 à 30 ans<br>
                                 <i class="fas fa-check-circle" style="color:var(--success);"></i> Zéro pénalité remboursement anticipé<br>
-                                <i class="fas fa-check-circle" style="color:var(--success);"></i> Réponse sous 24h<br>
+                                <i class="fas fa-check-circle" style="color:var(--success);"></i> Réponse sous 48h<br>
                                 <i class="fas fa-check-circle" style="color:var(--success);"></i> Accompagnement personnalisé
                             </div>
                             <button class="btn-primary" onclick="if(currentUser){showPanel('panelLoan',null);}else{document.getElementById('loginBtn').click();}" style="width:100%;background:linear-gradient(135deg,#007aaa,#009edb);border:none;"><i class="fas fa-paper-plane"></i> Faire une demande</button>
@@ -1447,7 +1449,7 @@
                             <!-- PANEL PRÊT -->
                             <div class="dash-panel" id="panelLoan">
                                 <h2 style="margin-bottom:0.5rem;font-size:1.4rem;"><i class="fas fa-hand-holding-usd"></i> Demande de prêt</h2>
-                                <p style="color:var(--text-muted);margin-bottom:1.5rem;font-size:0.9rem;">Remplissez ce formulaire, notre équipe vous recontactera sous 24h.</p>
+                                <p style="color:var(--text-muted);margin-bottom:1.5rem;font-size:0.9rem;">Remplissez ce formulaire, notre équipe vous recontactera sous 48h.</p>
                                 <form id="loanForm" class="loan-form">
                                     <div class="form-group">
                                         <label>Pourquoi souhaitez-vous ce prêt ? *</label>
@@ -2224,7 +2226,7 @@
 
                     <button type="submit" class="btn-primary" style="width:100%;padding:1rem;margin-top:0.5rem;"><i class="fas fa-check-circle"></i> Valider ma création de compte</button>
                 </form>
-                <p style="text-align:center;margin-top:1rem;font-size:0.8rem;">Tous les champs sont obligatoires. Votre demande sera traitée sous 24h maximum.</p>
+                <p style="text-align:center;margin-top:1rem;font-size:0.8rem;">Tous les champs sont obligatoires. Votre demande sera traitée sous 48h maximum.</p>
             </div>
         </div>
 
@@ -2267,6 +2269,7 @@
                         <label>Motif du virement</label>
                         <input type="text" id="tMotive" placeholder="Ex : Loyer, remboursement…" style="width:100%;padding:0.8rem 1rem;border:1.5px solid var(--border-light);border-radius:16px;font-family:'Inter',sans-serif;">
                     </div>
+                    <div id="transferBlockedMsg" style="display:none;background:#fff3f3;border:1.5px solid #e53935;color:#c62828;border-radius:12px;padding:1rem 1.2rem;font-size:0.9rem;font-weight:600;line-height:1.5;margin-bottom:0.8rem;text-align:center;"></div>
                     <button type="submit" class="btn-primary" style="width:100%;padding:0.9rem;"><i class="fas fa-paper-plane"></i> Continuer</button>
                 </form>
             </div>
@@ -2544,7 +2547,7 @@
                     <h2 style="color:#0a2b2e;">Bonjour ${u.firstName} ${u.lastName},</h2>
                     <p style="color:#444;line-height:1.7;">Nous avons bien reçu votre demande d'ouverture de compte <strong>${u.accountType || 'Nova'}</strong>. Votre dossier est en cours de traitement.</p>
                     <div style="background:#f0faf8;border-left:4px solid #007f6e;padding:16px;border-radius:8px;margin:20px 0;">
-                      <p style="margin:0;font-size:14px;color:#007f6e;font-weight:bold;">⏱ Délai de réponse : 24h maximum</p>
+                      <p style="margin:0;font-size:14px;color:#007f6e;font-weight:bold;">⏱ Délai de réponse : 48h maximum</p>
                     </div>
                     <table style="width:100%;border-collapse:collapse;font-size:14px;margin:20px 0;">
                       <tr style="background:#f8fafc;"><td style="padding:10px;font-weight:bold;color:#555;width:40%;">N° de dossier</td><td style="padding:10px;font-family:monospace;">${u.accountNumber}</td></tr>
@@ -2942,7 +2945,7 @@ currentUser = null;
                 ).then(ok => {
                     if (ok) {
                         msgEl.style.color = 'var(--success)';
-                        msgEl.textContent = '✅ Demande envoyée ! Notre équipe vous recontactera sous 24h.';
+                        msgEl.textContent = '✅ Demande envoyée ! Notre équipe vous recontactera sous 48h.';
                         document.getElementById('loanForm').reset();
                     } else {
                         msgEl.style.color = 'var(--error)';
@@ -3153,7 +3156,7 @@ currentUser = null;
                 sendEmail(NOVA_ADMIN_EMAIL, 'Admin NovaFinance',
                     `🔔 Nouvelle inscription — ${newUser.firstName} ${newUser.lastName}`,
                     emailNotifAdmin(newUser));
-                showToast("✅ Demande envoyée ! Réponse sous 24h.", "success");
+                showToast("✅ Demande envoyée ! Réponse sous 48h.", "success");
                 accountModal.style.display = 'none';
                 document.getElementById('accountForm').reset();
                 capturedPhoto=null; capturedFaceDescriptor=null; cniRectoData=null; cniVersoData=null; proofFileData=null;
@@ -3205,7 +3208,7 @@ currentUser = null;
                 if (user.status === 'pending') {
                     errorEl.innerHTML = `<div style="background:rgba(233,196,106,0.12);border:1px solid rgba(233,196,106,0.4);border-radius:12px;padding:1rem;text-align:left;">
                         <p style="font-weight:700;margin-bottom:0.4rem;">⏳ Compte en cours de vérification</p>
-                        <p style="font-size:0.85rem;margin-bottom:0.4rem;">Notre équipe examine vos documents. Vous recevrez une réponse par email sous <strong>24h maximum</strong>.</p>
+                        <p style="font-size:0.85rem;margin-bottom:0.4rem;">Notre équipe examine vos documents. Vous recevrez une réponse par email sous <strong>48h maximum</strong>.</p>
                         <p style="font-size:0.8rem;color:var(--text-muted);">Contact : novafinancecollective@gmail.com &nbsp;|&nbsp; +33 6 89 67 73 08</p>
                     </div>`;
                     return;
@@ -4281,6 +4284,8 @@ await supabase.from('transactions').delete().eq('email', email);
                 document.getElementById('transferOverlay').classList.remove('open');
                 document.getElementById('transferStep1').style.display = 'block';
                 document.getElementById('transferStep2').style.display = 'none';
+                const errDiv = document.getElementById('transferBlockedMsg');
+                if (errDiv) { errDiv.style.display = 'none'; errDiv.textContent = ''; }
             }
 
             // Étape 1 : le client remplit le formulaire → on passe à l'étape 2 (demande de code)
@@ -4288,8 +4293,14 @@ await supabase.from('transactions').delete().eq('email', email);
                 e.preventDefault();
                 // Vérifier le blocage individuel du client
                 if (!currentUser || currentUser.virementBlocked) {
-                    closeTransferModal();
-                    showToast("Opération impossible, veuillez contacter votre conseiller dédié à NovaFinance-Collective pour plus d'assistance.", 'error', 6000);
+                    // Afficher le message d'erreur directement dans le modal (visible)
+                    const errDiv = document.getElementById('transferBlockedMsg');
+                    if (errDiv) {
+                        errDiv.style.display = 'block';
+                        errDiv.textContent = "⚠️ Opération impossible, veuillez contacter votre conseiller dédié à NovaFinance-Collective pour plus d'assistance.";
+                    }
+                    // ET afficher le toast par dessus
+                    showToast("⚠️ Opération impossible — contactez votre conseiller NovaFinance.", 'error', 7000);
                     return;
                 }
                 // Virement autorisé → passer à l'étape 2 (confirmation code)
