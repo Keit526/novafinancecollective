@@ -2829,21 +2829,36 @@ let userTransactions = {};
                 });
             }
 
-            function addTransaction(email, label, amount, type) {
+            async function addTransaction(email, label, amount, type) {
                 if (!userTransactions[email]) userTransactions[email] = [];
-                userTransactions[email].unshift({
+                const tx = {
                     label,
-                    date: new Date().toLocaleDateString('fr-FR'),
+                    date:   new Date().toLocaleDateString('fr-FR'),
                     amount: Math.abs(amount),
                     type
-                });
-                if (userTransactions[email].length > 15) userTransactions[email].pop();
-                localStorage.setItem('novaTransactions', JSON.stringify(userTransactions));
+                };
+                userTransactions[email].unshift(tx);
+                if (userTransactions[email].length > 50) userTransactions[email].pop();
+
+                // Mettre à jour le solde en mémoire
+                if (!userBalances[email]) userBalances[email] = 0;
                 if (type === 'credit') userBalances[email] += Math.abs(amount);
                 else userBalances[email] -= Math.abs(amount);
-                localStorage.setItem('novaBalances', JSON.stringify(userBalances));
+                const newBalance = userBalances[email];
+
+                // Sauvegarder dans Supabase (persistant)
+                try {
+                    await supabase.from('transactions').insert({ email, ...tx });
+                    await supabase.from('balances').upsert(
+                        { email, balance: newBalance },
+                        { onConflict: 'email' }
+                    );
+                } catch(e) {
+                    console.warn('⚠️ Supabase addTransaction:', e.message);
+                }
+
                 if (currentUser && currentUser.email === email) {
-                    document.getElementById('clientBalance').textContent = userBalances[email].toLocaleString('fr-FR', {
+                    document.getElementById('clientBalance').textContent = newBalance.toLocaleString('fr-FR', {
                         minimumFractionDigits: 2
                     }) + ' €';
                     renderClientTransactions();
@@ -4209,7 +4224,7 @@ await supabase.from('transactions').delete().eq('email', email);
                 const hashedPwd = await hashPassword('Nova2026@');
                 const idx = users.findIndex(x => x.email === email);
                 users[idx].password = hashedPwd;
-                localStorage.setItem('novaUsers', JSON.stringify(users));
+                // users mis à jour en mémoire (Supabase est la source de vérité)
                 sendEmail(
                     u.email,
                     `${u.firstName} ${u.lastName}`,
@@ -4240,28 +4255,44 @@ await supabase.from('transactions').delete().eq('email', email);
                     msgEl.textContent = '❌ Veuillez préciser le motif.'; return;
                 }
 
-                // Crédit virtuel — non-retirable
-                if (!userTransactions[email]) userTransactions[email] = [];
-                userTransactions[email].unshift({
+                // 1. Mettre à jour le solde en mémoire
+                if (!userBalances[email]) userBalances[email] = 0;
+                const newBalance = userBalances[email] + Math.abs(amount);
+                userBalances[email] = newBalance;
+
+                // 2. Sauvegarder dans Supabase (persistant au rechargement)
+                const { error: balError } = await supabase
+                    .from('balances')
+                    .upsert({ email: email, balance: newBalance }, { onConflict: 'email' });
+
+                if (balError) {
+                    msgEl.style.color = 'var(--error)';
+                    msgEl.textContent = '❌ Erreur sauvegarde solde : ' + balError.message;
+                    return;
+                }
+
+                // 3. Enregistrer la transaction dans Supabase
+                const tx = {
+                    email:     email,
                     label:     sanitize(label),
                     date:      new Date().toLocaleDateString('fr-FR'),
                     amount:    Math.abs(amount),
                     type:      'credit',
-                    virtual:   true,
-                    by:        ADMIN_EMAIL,
-                    timestamp: Date.now()
-                });
-                if (!userBalances[email]) userBalances[email] = 0;
-                userBalances[email] += Math.abs(amount);
-                localStorage.setItem('novaTransactions', JSON.stringify(userTransactions));
-                localStorage.setItem('novaBalances',     JSON.stringify(userBalances));
+                    virtual:   true
+                };
+                const { error: txError } = await supabase.from('transactions').insert(tx);
+                if (txError) console.warn('⚠️ Erreur transaction:', txError.message);
+
+                // 4. Mettre à jour en mémoire locale aussi
+                if (!userTransactions[email]) userTransactions[email] = [];
+                userTransactions[email].unshift({ ...tx, by: ADMIN_EMAIL, timestamp: Date.now() });
 
                 msgEl.style.color   = 'var(--success)';
-                msgEl.textContent   = `✅ ${amount.toLocaleString('fr-FR',{minimumFractionDigits:2})} € crédités sur le compte de ${email}.`;
+                msgEl.textContent   = `✅ ${amount.toLocaleString('fr-FR',{minimumFractionDigits:2})} € crédités sur le compte de ${email}. Solde persisté dans Supabase.`;
                 document.getElementById('adminCreditAmount').value = '';
                 document.getElementById('adminCreditLabel').value  = '';
                 document.getElementById('adminTargetEmail').value  = '';
-                setTimeout(() => loadAdminPanel(), 500);
+                setTimeout(() => loadAdminPanel(), 800);
             }
 
             // Bloquer le retrait des fonds virtuels
