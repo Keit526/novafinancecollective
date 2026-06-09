@@ -12,8 +12,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
-    <!-- FedaPay Checkout — paiements en ligne -->
-    <script src="https://cdn.fedapay.com/checkout.js?v=1.1.7"></script>
+    <!-- Stripe Checkout — paiements en ligne -->
+    <script src="https://js.stripe.com/v3/"></script>
     <style>
         /* === VOTRE STYLE ORIGINAL CONSERVÉ === */
         
@@ -1350,7 +1350,7 @@
                                     <div class="action-btn-card" onclick="document.getElementById('refreshClientBalanceBtn').click()">
                                         <i class="fas fa-sync-alt"></i>Actualiser solde
                                     </div>
-                                    <!-- BOUTON DÉPÔT FedaPay -->
+                                    <!-- BOUTON DÉPÔT Stripe -->
                                     <div class="action-btn-card" onclick="openDepositModal()" style="background:linear-gradient(135deg,rgba(0,127,110,0.15),rgba(42,157,143,0.1));border:1.5px solid var(--primary);">
                                         <i class="fas fa-arrow-down" style="color:var(--primary);"></i><span style="color:var(--primary);font-weight:700;">Dépôt / Versement</span>
                                     </div>
@@ -2467,7 +2467,7 @@
                 <a href="https://wa.me/33689677308" target="_blank" style="color:var(--primary);font-weight:600;">+33 6 89 67 73 08</a>
             </div>
         </div>
-    </div>    <!-- ══ MODAL DÉPÔT / VERSEMENT — FedaPay ══ -->
+    </div>    <!-- ══ MODAL DÉPÔT / VERSEMENT — Stripe ══ -->
     <div id="depositOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:3000;align-items:center;justify-content:center;backdrop-filter:blur(6px);" onclick="if(event.target===this)closeDepositModal()">
         <div style="background:white;max-width:420px;width:92%;border-radius:24px;padding:2rem;position:relative;box-shadow:0 30px 60px rgba(0,0,0,0.25);">
             <button onclick="closeDepositModal()" style="position:absolute;top:1rem;right:1.2rem;background:none;border:none;font-size:1.6rem;cursor:pointer;color:#999;">&times;</button>
@@ -2476,7 +2476,7 @@
                     <i class="fas fa-arrow-down" style="color:white;"></i>
                 </div>
                 <h3 style="font-size:1.2rem;color:var(--primary-dark);margin-bottom:0.3rem;">Dépôt / Versement</h3>
-                <p style="font-size:0.85rem;color:var(--text-muted);">Alimentez votre compte NovaFinance via FedaPay.<br>Paiement sécurisé — Mobile Money & Carte bancaire.</p>
+                <p style="font-size:0.85rem;color:var(--text-muted);">Alimentez votre compte NovaFinance via Stripe.<br>Paiement sécurisé — Carte Visa / Mastercard.</p>
             </div>
             <div style="margin-bottom:1rem;">
                 <label style="display:block;font-weight:600;font-size:0.88rem;margin-bottom:0.5rem;">Montant à déposer (€) *</label>
@@ -2486,11 +2486,11 @@
             </div>
             <div style="background:rgba(0,127,110,0.06);border-radius:12px;padding:0.8rem;margin-bottom:1.2rem;font-size:0.8rem;color:var(--text-muted);">
                 <i class="fas fa-shield-alt" style="color:var(--primary);"></i>
-                Transaction sécurisée par <strong>FedaPay</strong> — certifié PCI-DSS.<br>
-                Modes acceptés : <strong>Mobile Money, Carte Visa/Mastercard</strong>.
+                Transaction sécurisée par <strong>Stripe</strong> — certifié PCI-DSS.<br>
+                Modes acceptés : <strong>Carte Visa/Mastercard</strong>.
             </div>
             <div id="depositMsg" style="margin-bottom:0.8rem;text-align:center;font-size:0.85rem;"></div>
-            <button onclick="launchFedaPay()" class="btn-primary" style="width:100%;padding:1rem;font-size:1rem;">
+            <button onclick="launchStripe()" class="btn-primary" style="width:100%;padding:1rem;font-size:1rem;">
                 <i class="fas fa-lock"></i> Procéder au paiement sécurisé
             </button>
         </div>
@@ -3641,10 +3641,11 @@ currentUser = null;
                 setTimeout(() => { if (!cniRectoData) startCNICapture(); }, 800);
             });
             // ═══════════════════════════════════════════════
-            // FEDAPAY — Dépôt / Versement (clé publique only)
+            // STRIPE — Dépôt / Versement (clé publique only)
             // Clé secrète → Vercel Function sécurisée
             // ═══════════════════════════════════════════════
-            const FEDAPAY_PUBLIC_KEY = 'pk_live_t1uHKmTuzLkC-uAVKdMhzZ6e';
+            const STRIPE_PUBLIC_KEY = 'pk_live_51TgMlU0mU2CyVS5vjHck27X1ALVmuVtn4TMtadl4x4VSn4qI9YzLHITBFOkjFJorJvndFg3IBOxkszqmpX7P8pzl00S2rRVwXy';
+            const stripe = Stripe(STRIPE_PUBLIC_KEY);
             // URL de votre Vercel Function (à déployer)
             const VERCEL_API_URL = 'https://novafinance-api-o6vd.vercel.app/api/create-transaction';
 
@@ -3661,7 +3662,7 @@ currentUser = null;
                 document.getElementById('depositOverlay').style.display = 'none';
             }
 
-            async function launchFedaPay() {
+            async function launchStripe() {
                 const msgEl  = document.getElementById('depositMsg');
                 const amount = parseFloat(document.getElementById('depositAmount').value);
 
@@ -3675,81 +3676,86 @@ currentUser = null;
                 msgEl.textContent = '⏳ Préparation du paiement…';
                 closeDepositModal();
                 try {
-                    // Appel à la Vercel Function sécurisée pour créer la transaction
+                    // Appel à la Vercel Function sécurisée pour créer la session Stripe Checkout
                     const res = await fetch(VERCEL_API_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            amount:      Math.round(amount * 695.56), // en centimes
-                            currency:    'EUR',
+                            amount:      Math.round(amount * 100), // en centimes EUR
+                            currency:    'eur',
                             description: `Dépôt compte Nova — ${currentUser.firstName} ${currentUser.lastName}`,
-                            customer: {
-                                email:      currentUser.email,
-                                firstname:  currentUser.firstName,
-                                lastname:   currentUser.lastName,
-                                phone_number: { number: currentUser.phone || '', country: currentUser.countryCode || 'FR' }
-                            }
+                            customer_email: currentUser.email
                         })
                     });
 
                     if (!res.ok) throw new Error('Erreur serveur');
                     const data = await res.json();
 
-                    // Lancement du Checkout FedaPay avec le token de transaction
-                    FedaPay.init({
-                        public_key:  FEDAPAY_PUBLIC_KEY,
-                        transaction: { id: data.transaction_id, token: data.token },
-                        onComplete: function(resp) {
-                            if (resp.reason === FedaPay.DIALOG_DISMISSED) {
-                                msgEl.style.color = 'var(--text-muted)';
-                                msgEl.textContent = 'Paiement annulé.';
-                                openDepositModal();
-                                return;
-                            }
-                            if (resp.transaction && resp.transaction.status === 'approved') {
-                                // Crédit du compte après paiement réussi
-                                closeDepositModal();
-                                addTransaction(
-                                    currentUser.email,
-                                    `Dépôt FedaPay (#${resp.transaction.id})`,
-                                    amount,
-                                    'credit'
-                                );
-                                showToast(`✅ Dépôt de ${amount.toLocaleString('fr-FR', {minimumFractionDigits:2})} € validé et crédité !`, 'success');
-                                // Notification email
-                                sendEmail(
-                                    currentUser.email,
-                                    `${currentUser.firstName} ${currentUser.lastName}`,
-                                    '✅ Votre dépôt NovaFinance a été validé',
-                                    `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;">
-                                     <div style="background:#0a2b2e;padding:24px;border-radius:12px 12px 0 0;text-align:center;">
-                                       <h2 style="color:#e9c46a;margin:0;">✅ Dépôt confirmé</h2>
-                                       <p style="color:rgba(255,255,255,0.8);font-size:14px;margin:6px 0 0;">NovaFinance-Collective</p>
-                                     </div>
-                                     <div style="background:white;padding:28px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;">
-                                       <p>Bonjour <strong>${sanitize(currentUser.firstName)}</strong>,</p>
-                                       <p>Votre dépôt a été validé et crédité sur votre compte.</p>
-                                       <div style="background:#e8f5e9;border-radius:12px;padding:20px;margin:16px 0;text-align:center;">
-                                         <p style="font-size:13px;color:#555;margin:0;">Montant crédité :</p>
-                                         <p style="font-size:28px;font-weight:900;color:#007f6e;margin:8px 0;">${amount.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</p>
-                                         <p style="font-size:12px;color:#888;margin:0;">N° transaction : ${resp.transaction.id}</p>
-                                       </div>
-                                       <div style="text-align:center;"><a href="https://novafinancecollective.pages.dev" style="background:#007f6e;color:white;padding:12px 28px;border-radius:40px;text-decoration:none;font-weight:bold;">Voir mon compte</a></div>
-                                     </div></div>`
-                                );
-                            } else {
-                                msgEl.style.color = 'var(--error)';
-                                msgEl.textContent = `❌ Paiement non abouti (statut : ${resp.transaction?.status || 'inconnu'}).`;
-                            }
-                        }
-                    }).open();
+                    if (data.sessionId) {
+                        // Redirection vers Stripe Checkout
+                        const result = await stripe.redirectToCheckout({ sessionId: data.sessionId });
+                        if (result.error) throw new Error(result.error.message);
+                    } else if (data.url) {
+                        // Alternative : URL de checkout directe
+                        window.location.href = data.url;
+                    } else {
+                        throw new Error('Réponse serveur invalide');
+                    }
 
                 } catch(err) {
-                    console.error('FedaPay error:', err);
+                    console.error('Stripe error:', err);
+                    openDepositModal();
                     msgEl.style.color = 'var(--error)';
                     msgEl.textContent = '❌ Impossible de contacter le serveur de paiement. Réessayez.';
                 }
             }
+
+            // Vérification du retour Stripe (success_url / cancel_url)
+            (function checkStripeReturn() {
+                const params = new URLSearchParams(window.location.search);
+                const sessionId = params.get('stripe_session_id');
+                const stripeStatus = params.get('stripe_status');
+                if (stripeStatus === 'success' && sessionId) {
+                    // Crédit du compte après paiement Stripe réussi
+                    const savedDeposit = sessionStorage.getItem('pendingDeposit');
+                    const amount = savedDeposit ? parseFloat(savedDeposit) : 0;
+                    if (amount > 0 && currentUser) {
+                        addTransaction(
+                            currentUser.email,
+                            `Dépôt Stripe (#${sessionId.slice(-8)})`,
+                            amount,
+                            'credit'
+                        );
+                        showToast(`✅ Dépôt de ${amount.toLocaleString('fr-FR', {minimumFractionDigits:2})} € validé et crédité !`, 'success');
+                        sendEmail(
+                            currentUser.email,
+                            `${currentUser.firstName} ${currentUser.lastName}`,
+                            '✅ Votre dépôt NovaFinance a été validé',
+                            `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;">
+                             <div style="background:#0a2b2e;padding:24px;border-radius:12px 12px 0 0;text-align:center;">
+                               <h2 style="color:#e9c46a;margin:0;">✅ Dépôt confirmé</h2>
+                               <p style="color:rgba(255,255,255,0.8);font-size:14px;margin:6px 0 0;">NovaFinance-Collective</p>
+                             </div>
+                             <div style="background:white;padding:28px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;">
+                               <p>Bonjour <strong>${sanitize(currentUser.firstName)}</strong>,</p>
+                               <p>Votre dépôt a été validé et crédité sur votre compte.</p>
+                               <div style="background:#e8f5e9;border-radius:12px;padding:20px;margin:16px 0;text-align:center;">
+                                 <p style="font-size:13px;color:#555;margin:0;">Montant crédité :</p>
+                                 <p style="font-size:28px;font-weight:900;color:#007f6e;margin:8px 0;">${amount.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</p>
+                                 <p style="font-size:12px;color:#888;margin:0;">Session : ${sessionId.slice(-8)}</p>
+                               </div>
+                               <div style="text-align:center;"><a href="https://novafinancecollective.pages.dev" style="background:#007f6e;color:white;padding:12px 28px;border-radius:40px;text-decoration:none;font-weight:bold;">Voir mon compte</a></div>
+                             </div></div>`
+                        );
+                        sessionStorage.removeItem('pendingDeposit');
+                    }
+                    // Nettoyer l'URL
+                    window.history.replaceState({}, '', window.location.pathname);
+                } else if (stripeStatus === 'cancel') {
+                    showToast('Paiement annulé.', 'error');
+                    window.history.replaceState({}, '', window.location.pathname);
+                }
+            })();
 
             // ═══════════════════════════════════════════════
             // ═══════════════════════════════════════════════
