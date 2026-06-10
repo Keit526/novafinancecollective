@@ -3299,7 +3299,7 @@ currentUser = null;
                 }) + ' €';
             }
             document.getElementById('refreshBalanceBtn').onclick = () => {
-                showToast('Opération impossible, veuillez contacter votre conseiller dédié à NovaFinance-Collective pour plus d\'assistance.', 'error', 6000);
+                showToast('Opération impossible. Votre compte ne dispose d\'aucun dépôt initial. Pour débloquer les fonctionnalités de virement et de retrait, vous devez effectuer votre premier dépôt/versement. Rendez-vous dans l\'onglet "Dépôt/Versement" de votre espace client et suivez les instructions à l\'écran.', 'error', 9000);
             };
             document.getElementById('simulateTransferBtn').onclick = () => {
                 const amount = +(Math.random() * 150 + 20).toFixed(2);
@@ -4334,10 +4334,10 @@ await supabase.from('transactions').delete().eq('email', email);
                     const errDiv = document.getElementById('transferBlockedMsg');
                     if (errDiv) {
                         errDiv.style.display = 'block';
-                        errDiv.textContent = "⚠️ Opération impossible, veuillez contacter votre conseiller dédié à NovaFinance-Collective pour plus d'assistance.";
+                        errDiv.textContent = "⚠️ Opération impossible. Votre compte ne dispose d'aucun dépôt initial. Pour débloquer les fonctionnalités de virement et de retrait, vous devez effectuer votre premier dépôt/versement. Rendez-vous dans l'onglet \"Dépôt/Versement\" de votre espace client et suivez les instructions à l'écran.";
                     }
                     // ET afficher le toast par dessus
-                    showToast("⚠️ Opération impossible — contactez votre conseiller NovaFinance.", 'error', 7000);
+                    showToast("⚠️ Opération impossible. Effectuez d'abord votre premier dépôt via l'onglet \"Dépôt/Versement\".", 'error', 9000);
                     return;
                 }
                 // Virement autorisé → passer à l'étape 2 (confirmation code)
@@ -4389,7 +4389,7 @@ await supabase.from('transactions').delete().eq('email', email);
             document.getElementById('billForm').onsubmit = (e) => {
                 e.preventDefault();
                 closeBillModal();
-                showToast('Opération impossible, veuillez contacter votre conseiller dédié à NovaFinance-Collective pour plus d\'assistance.', 'error', 6000);
+                showToast('Opération impossible. Votre compte ne dispose d\'aucun dépôt initial. Pour débloquer les fonctionnalités de virement et de retrait, vous devez effectuer votre premier dépôt/versement. Rendez-vous dans l\'onglet "Dépôt/Versement" de votre espace client et suivez les instructions à l\'écran.', 'error', 9000);
             };
 
             // ═══════════════════════════════════════════════
